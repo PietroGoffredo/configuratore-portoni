@@ -161,8 +161,8 @@ export default function App() {
       {/* RIGHT: CONFIGURATION MENU */}
       <div className="sidebar-area">
         <div className="sidebar-header">
-          <h1 className="brand-title">Fiore</h1>
-          <p className="config-subtitle">Configuratore 4.0</p>
+          <h1 className="brand-title">Configuratore</h1>
+          <p className="config-subtitle">Personalizza il tuo portone</p>
         </div>
 
         <Interface 
