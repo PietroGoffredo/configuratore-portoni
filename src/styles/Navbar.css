@@ -193,6 +193,7 @@
    HAMBURGER MENU (VORTEX)
    ========================================= */
 .hamburger {
+  user-select: none;
   display: none; 
   padding: 15px 0 15px 15px;
   cursor: pointer;
@@ -207,7 +208,14 @@
   margin: 0;
   overflow: visible;
   transform: scale(0.8); 
+
+  -webkit-tap-highlight-color: transparent; /* Rimuove il flash blu su Android/iOS */
+  outline: none; /* Rimuove il bordo di focus */
+  user-select: none; /* Impedisce di selezionarlo come testo */
+  -webkit-user-select: none; /* Safari */
+  touch-action: manipulation; /* Migliora la risposta al tocco */
 }
+
 .hamburger.is-active .hamburger-inner,
 .hamburger.is-active .hamburger-inner::before,
 .hamburger.is-active .hamburger-inner::after {
