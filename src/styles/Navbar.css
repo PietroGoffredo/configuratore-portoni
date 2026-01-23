@@ -1,0 +1,430 @@
+/* src/styles/Navbar.css */
+
+/* --- CONFIGURAZIONE BASE (Desktop) --- */
+.navbar {
+  width: 100%;
+  height: auto; 
+  background-color: #24272d;
+  display: flex;
+  align-items: stretch; 
+  flex-wrap: wrap; 
+  justify-content: space-between;
+  padding-right: 15%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1000;
+  font-family: 'Open Sans', sans-serif;
+}
+
+/* --- LOGO --- */
+.navbar-logo {
+  display: flex;
+  width: 23.5%;
+  align-items: center; 
+  justify-content: flex-end;   
+  flex: 0 0 auto; 
+  height: auto; 
+  cursor: pointer;
+  margin-bottom: 1px;
+  margin-left: 5px;
+  padding: 5px 0; 
+}
+
+.navbar-logo img {
+  width: auto;
+  height: 90px; 
+  object-fit: contain;
+}
+
+/* --- MENU PRINCIPALE --- */
+.navbar-menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0; 
+  gap: 35px;
+  flex: 1; 
+  flex-wrap: wrap; 
+  justify-content: flex-end;
+  align-items: center; 
+}
+
+.nav-item {
+  position: relative;
+  height: 103px; 
+  display: flex;
+  align-items: center;
+}
+
+/* Link di base */
+.nav-link {
+  text-decoration: none;
+  color: #cccccc;
+  font-size: 0.85rem;
+  font-weight: 400; 
+  text-transform: none; 
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%; 
+  position: relative; 
+  width: 100%; 
+}
+
+/* RICHIESTA 1: Stili Desktop per Arredamento (Split View) */
+/* Rimuoviamo il comportamento link standard per il contenitore e sistemiamo il testo */
+.nav-link.split-view {
+  padding: 0; /* Il padding è gestito dal link interno */
+  display: flex;
+  align-items: center;
+}
+
+.split-view-text {
+  text-decoration: none;
+  color: inherit; /* Eredita #cccccc o #ffffff dall'hover del padre */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 5px; /* Stesso padding di .nav-link */
+  width: 100%;
+}
+
+/* Nascondiamo il div freccia mobile su desktop */
+.arrow-toggle {
+  display: none;
+}
+
+/* --- ANIMAZIONE LINEA SUPERIORE (Desktop) --- */
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0; 
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background-color: #ffffff;
+  transition: width 0.4s ease;
+}
+
+.nav-link:hover { color: #ffffff; }
+.nav-link:hover::before { width: 100%; }
+.nav-item:hover .nav-link { color: #ffffff; }
+.nav-item:hover .nav-link::before { width: 100%; }
+
+/* --- FRECCIA --- */
+.nav-link.has-dropdown::after {
+  content: '';
+  border: solid #cccccc;
+  border-width: 0 1.5px 1.5px 0;
+  display: inline-block;
+  padding: 2.5px;
+  margin: 0px 1.5px 0px -0.5px;
+  transform: rotate(45deg) translateY(-2px);
+  transition: border-color 0.3s, transform 0.3s; 
+}
+.nav-link.has-dropdown:hover::after,
+.nav-item:hover .nav-link.has-dropdown::after {
+  border-color: #ffffff;
+}
+
+/* --- DROPDOWN MENU (Desktop) --- */
+.dropdown-menu {
+  position: absolute;
+  top: 100%; 
+  left: 100px; 
+  transform: translateX(-50%);
+  background-color: #24272d;
+  width: 200px;
+  list-style: none;
+  padding: 0; 
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, max-height 0.3s ease; 
+  z-index: 1001;
+}
+
+/* Sovrascrive la larghezza di 200px solo per il menu lingua */
+.dropdown-menu.flag {
+  width: auto;       /* Si adatta al contenuto */
+  min-width: 100%;   /* Almeno largo quanto il genitore (la bandierina IT) */
+  left: 50%;         /* Centrato rispetto al genitore */
+  transform: translateX(-30%); /* Centra perfettamente */
+}
+
+
+@media (min-width: 801px) {
+  .nav-item:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.dropdown-item { font-size: 14px; display: block; }
+.dropdown-link {
+  display: block;
+  padding: 20px;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-transform: none;
+  transition: all 0.4s;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+.dropdown-link:hover { background-color: #bd9b4d; color: #ffffff; }
+.flag-icon { width: 18px; height: auto; display: block; }
+
+
+/* =========================================
+   HAMBURGER MENU (VORTEX)
+   ========================================= */
+.hamburger {
+  display: none; 
+  padding: 15px 0 15px 15px;
+  cursor: pointer;
+  transition-property: filter;
+  transition-duration: 0.3s; 
+  transition-timing-function: linear; 
+  font: inherit;
+  color: inherit;
+  text-transform: none;
+  background-color: transparent;
+  border: 0;
+  margin: 0;
+  overflow: visible;
+  transform: scale(0.8); 
+}
+.hamburger.is-active .hamburger-inner,
+.hamburger.is-active .hamburger-inner::before,
+.hamburger.is-active .hamburger-inner::after {
+  background-color: #ffffff; 
+}
+
+.hamburger-box { width: 40px; height: 28px; display: inline-block; position: relative; }
+
+.hamburger-inner {
+  display: block;
+  top: 50%;
+}
+.hamburger-inner, .hamburger-inner::before, .hamburger-inner::after {
+  width: 40px;
+  height: 4px;
+  background-color: #fff; 
+  border-radius: 4px;
+  position: absolute;
+  transition-property: transform;
+  transition-duration: 0.2s; 
+  transition-timing-function: linear;
+}
+.hamburger-inner::before, .hamburger-inner::after { content: ""; display: block; }
+.hamburger-inner::before { top: -10px; }
+.hamburger-inner::after { bottom: -10px; }
+
+/* Vortex Specifics */
+.hamburger--vortex .hamburger-inner {
+  transition-duration: 0.2s; 
+  transition-timing-function: linear; 
+}
+.hamburger--vortex .hamburger-inner::before,
+.hamburger--vortex .hamburger-inner::after {
+  transition-duration: 0s;
+  transition-delay: 0.2s; 
+  transition-timing-function: linear; 
+}
+.hamburger--vortex .hamburger-inner::before { transition-property: top, opacity; }
+.hamburger--vortex .hamburger-inner::after { transition-property: bottom, transform; }
+
+.hamburger--vortex.is-active .hamburger-inner {
+  transform: rotate(315deg);
+  transition-timing-function: linear; 
+}
+.hamburger--vortex.is-active .hamburger-inner::before,
+.hamburger--vortex.is-active .hamburger-inner::after {
+  transition-delay: 0s;
+}
+.hamburger--vortex.is-active .hamburger-inner::before {
+  top: 0;
+  opacity: 0;
+}
+.hamburger--vortex.is-active .hamburger-inner::after {
+  bottom: 0;
+  transform: rotate(90deg);
+}
+
+
+/* =========================================
+   MEDIA QUERY: MOBILE (< 800px)
+   ========================================= */
+@media screen and (max-width: 800px) {
+  .navbar {
+    padding: 15px 25px; 
+    height: 126px; 
+    align-items: center; 
+    flex-wrap: nowrap; 
+  }
+
+  .navbar-logo {
+    width: auto;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0;
+    flex: 0 0 auto; 
+    height: 100%;
+  }
+  .navbar-logo img { height: 90px; } 
+
+  .hamburger {
+    display: block;
+    margin-left: auto; 
+    flex: 0 0 auto;
+    padding-right: 0;
+  }
+
+  .navbar-menu {
+    display: none; 
+    position: absolute;
+    top: 120px; 
+    left: 0;
+    width: 100%; 
+    flex-direction: column; 
+    align-items: flex-start;
+    padding: 0;
+    gap: 0; 
+    margin-top: 0;
+    background-color: #3b404a; 
+    z-index: 999;
+  }
+
+  .navbar-menu.is-open {
+    display: flex;
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .nav-item {
+    width: 100%; 
+    height: auto; 
+    flex-direction: column; 
+    align-items: flex-start;
+    background-color: #3b404a; 
+    transition: background-color 0.3s ease;
+    border-bottom: none; 
+  }
+
+  .nav-item.open {
+    background-color: #bd9b4d;
+  }
+
+  .nav-link {
+    width: 100%;
+    padding: 25px 20px;
+    justify-content: space-between; 
+    font-size: 0.9rem;
+    color: #ffffff;
+    height: auto;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-link::before { display: none; } 
+
+  /* --- STILI MOBILE PER SPLIT VIEW --- */
+  .nav-link.split-view {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .split-view-text {
+    flex: 1;
+    padding: 25px 0 25px 20px; 
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+  }
+
+  .arrow-toggle {
+    width: 45px; 
+    display: flex; /* Sovrascrive il display:none del desktop */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .arrow-toggle::after {
+    content: '';
+    border: solid #ffffff;
+    border-width: 0 1.5px 1.5px 0;
+    display: inline-block;
+    padding: 2.5px;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.3s;
+  }
+
+  .nav-link.split-view::after {
+    display: none;
+  }
+
+  .nav-item.open .arrow-toggle::after,
+  .nav-item.open .nav-link.has-dropdown:not(.split-view)::after {
+    transform: rotate(225deg); 
+  }
+
+  .nav-link.has-dropdown:not(.split-view)::after {
+    margin-right: 0;
+    transition: transform 0.3s;
+  }
+
+  /* --- DROPDOWN MOBILE --- */
+  .dropdown-menu {
+    position: static; 
+    width: 100%; 
+    transform: none; 
+    box-shadow: none;
+    background-color: #3b404a; 
+    
+    max-height: 0;
+    overflow: hidden;
+    opacity: 1; 
+    visibility: visible;
+    
+    /* RICHIESTA 3: Durata 0.8s e ease-out per apertura E chiusura */
+    transition: max-height 0.8s ease-out;
+  }
+
+  .nav-item.open .dropdown-menu {
+    max-height: 600px; 
+  }
+
+  .dropdown-link {
+    padding-left: 35px; 
+    font-size: 0.88rem;
+    color: #ffffff;
+    border-bottom: 1px solid #24272d;
+  }
+
+  .dropdown-item:last-child .dropdown-link {
+    border-bottom: none;
+  }
+  
+  .dropdown-link:hover {
+    background-color: rgba(255,255,255,0.05); 
+    color: #fff;
+  }
+
+  .flag-icon.en{
+    padding: 5px 0;
+    margin-left: -10px;
+  }
+}
