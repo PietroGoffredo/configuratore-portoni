@@ -13,20 +13,23 @@ function AccordionItem({ title, isOpen, onClick, children }) {
   );
 }
 
-// category: stringa univoca (es. 'ext_central')
-// loadingState: oggetto { category, id }
 function TextureSelector({ label, options, selectedId, onSelect, loadingState, category }) {
   const currentSelection = options.find(o => o.id === selectedId);
+  
   return (
     <div style={{ marginBottom: '25px' }}>
-      <span className="selector-label">{label} — <span style={{color: '#333'}}>{currentSelection?.label}</span></span>
+      <span className="selector-label">
+        {label} — <span style={{color: 'var(--color-grey-2)', fontWeight: 400}}>{currentSelection?.label}</span>
+      </span>
       <div className="selector-grid">
         {options.map((opt) => {
           const isSelected = selectedId === opt.id;
-          
-          // LA LOGICA CHIAVE PER IL LOADER SINGOLO:
-          // Deve coincidere l'ID della texture E la categoria del selettore
           const isLoading = loadingState.category === category && loadingState.id === opt.id;
+          
+          const useImage = opt.isTextured || opt.icon;
+          const imageUrl = opt.icon 
+             ? `/textures/${opt.folder}/${opt.icon}` 
+             : null; 
 
           return (
             <div 
@@ -34,27 +37,20 @@ function TextureSelector({ label, options, selectedId, onSelect, loadingState, c
               onClick={() => onSelect(opt)}
               className={`texture-option ${isSelected ? 'selected' : ''}`}
               title={opt.label}
-              style={{ pointerEvents: isLoading ? 'none' : 'auto' }} 
+              style={{ 
+                 pointerEvents: isLoading ? 'none' : 'auto',
+                 backgroundColor: !useImage ? opt.hex : 'transparent' 
+              }} 
             >
               {isLoading && (
-                <div className="loading-overlay">
-                  <div className="spinner"></div>
-                </div>
+                <div className="loading-overlay"><div className="spinner"></div></div>
               )}
               
-              <div className="texture-img-container">
-                <img 
-                  src={`/textures/${opt.folder}/${opt.file}`} 
-                  alt={opt.label}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                />
-                {opt.tint && opt.tint !== '#ffffff' && (
-                  <div style={{ 
-                    position:'absolute', top:0, left:0, width:'100%', height:'100%', 
-                    backgroundColor: opt.tint, opacity: 0.6, mixBlendMode: 'multiply' 
-                  }} />
-                )}
-              </div>
+              {useImage && imageUrl && (
+                <div className="texture-img-container">
+                  <img src={imageUrl} alt={opt.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              )}
             </div>
           );
         })}
@@ -65,54 +61,61 @@ function TextureSelector({ label, options, selectedId, onSelect, loadingState, c
 
 export default function Interface({ 
   openSections, toggleSection, 
-  availableOptions,
+  finishes,
   extState, intState,
-  loadingState // Riceviamo l'oggetto loadingState
+  loadingState 
 }) {
+  
+  // Filtro Categorie
+  const laccati = finishes.filter(f => f.category === 'laccato');
+  const hpl = finishes.filter(f => f.category === 'hpl');
+  const nobilitati = finishes.filter(f => f.category === 'nobilitato');
+
   return (
     <div className="sidebar-content">
-      <AccordionItem title="Colore e Materiali Esterni" isOpen={openSections['esterni']} onClick={() => toggleSection('esterni')}>
-        {/* Passiamo la categoria univoca a ogni selettore */}
+      
+      {/* SEZIONE ESTERNI */}
+      <AccordionItem title="Esterni" isOpen={openSections['esterni']} onClick={() => toggleSection('esterni')}>
+        
+        {/* Laccati Esterni */}
         <TextureSelector 
-          label="Pannello Principale" 
-          category="ext_central"
-          options={availableOptions} 
-          selectedId={extState.central.id} 
-          onSelect={extState.setCentral} 
-          loadingState={loadingState} 
+          label="Laccati (Opachi)" 
+          category="ext_main" options={laccati} 
+          selectedId={extState.finish.id} onSelect={extState.setFinish} loadingState={loadingState} 
         />
+        
+        {/* HPL Esterni */}
         <TextureSelector 
-          label="Cornice" 
-          category="ext_cornice"
-          options={availableOptions} 
-          selectedId={extState.cornice.id} 
-          onSelect={extState.setCornice} 
-          loadingState={loadingState} 
+          label="HPL (Alta Resistenza)" 
+          category="ext_main" options={hpl} 
+          selectedId={extState.finish.id} onSelect={extState.setFinish} loadingState={loadingState} 
         />
       </AccordionItem>
 
-      <AccordionItem title="Accessori Esterni" isOpen={openSections['accessori_ext']} onClick={() => toggleSection('accessori_ext')}>
-        <span className="selector-label">Finitura Maniglione</span>
-        <div className="btn-group">
-          <button onClick={() => extState.setManiglia("silver")} className={`finish-btn ${extState.maniglia === "silver" ? "active" : ""}`}>Argento Satinato</button>
-          <button onClick={() => extState.setManiglia("nero")} className={`finish-btn ${extState.maniglia === "nero" ? "active" : ""}`}>Nero Opaco</button>
-        </div>
-      </AccordionItem>
-
+      {/* SEZIONE INTERNI */}
       <AccordionItem title="Interni" isOpen={openSections['interni']} onClick={() => toggleSection('interni')}>
+        
+        {/* 1. Laccati Interni */}
         <TextureSelector 
-          label="Pannello Interno" 
-          category="int_central"
-          options={availableOptions} 
-          selectedId={intState.central.id} 
-          onSelect={intState.setCentral} 
-          loadingState={loadingState} 
+          label="Laccati (Opachi)" 
+          category="int_main" options={laccati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
         />
-         <span className="selector-label">Maniglia Interna</span>
-        <div className="btn-group">
-          <button onClick={() => intState.setManiglia("silver")} className={`finish-btn ${intState.maniglia === "silver" ? "active" : ""}`}>Standard</button>
-          <button onClick={() => intState.setManiglia("nero")} className={`finish-btn ${intState.maniglia === "nero" ? "active" : ""}`}>Black Edition</button>
-        </div>
+
+        {/* 2. HPL Interni */}
+        <TextureSelector 
+          label="HPL (Alta Resistenza)" 
+          category="int_main" options={hpl} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 3. Nobilitati Interni */}
+        <TextureSelector 
+          label="Nobilitato" 
+          category="int_main" options={nobilitati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
       </AccordionItem>
     </div>
   );
