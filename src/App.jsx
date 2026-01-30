@@ -9,6 +9,7 @@ import ScrollToTop from './components/ui/ScrollToTop';
 import Interface from './components/ui/Interface';
 
 import { TEXTURES_DATA } from './constants/data';
+// Rimosso Ambientazione dall'import
 import { Nordic01Esterno, PannelloInterno, StrutturaCompleta } from './components/3d/DoorParts';
 import './styles/App.css';
 
@@ -87,33 +88,31 @@ export default function App() {
 
               <Canvas 
                 shadows 
-                // Near 0.1 e Far 200 per massima precisione Z-Buffer
                 camera={{ position: [0, 1, 4], fov: 45, near: 0.1, far: 200 }} 
                 style={{ touchAction: "none" }}
               >
                 <color attach="background" args={['#eeeeee']} />
                 <ambientLight intensity={0.7} />
                 
-                {/* FIX BUG TRIANGOLI: shadow-bias negativo rimuove l'acne delle ombre */}
                 <directionalLight 
                   position={[5, 10, 5]} 
                   intensity={1.5} 
                   castShadow 
-                  shadow-bias={-0.0005} 
+                  shadow-normalBias={0.04} 
+                  shadow-mapSize={[2048, 2048]}
                 />
                 
                 <Environment preset="city" />
 
                 <Suspense fallback={null}>
-                    {/* Tutto posizionato a 0,0,0 Assoluto */}
                     <group>
+                       {/* RIMOSSO Ambientazione */}
                        <StrutturaCompleta />
                        <PannelloInterno config={intFinish} />
                        <Nordic01Esterno config={extFinish} />
                     </group>
                 </Suspense>
                 
-                {/* CAMERA TOTALMENTE LIBERA */}
                 <OrbitControls 
                   makeDefault 
                   enablePan={true} 
