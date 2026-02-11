@@ -5,7 +5,7 @@
   --font-primary: 'Raleway', sans-serif;
   --font-navbar: 'Open Sans', sans-serif;
   
-  /* PALETTE DEFINITA */
+  /* PALETTE */
   --col-white-1: #ffffff;
   --col-white-2: #f8f8f8;
   --col-white-3: #e2e3e8;
@@ -13,52 +13,32 @@
   
   --col-gold: #bd9b4d;
   
-  --color-black-1: #404041;
-  --color-black-2: #333333;
-  --color-black-3: #24272d;
+  --col-black-1: #404041;
+  --col-black-2: #333333;
+  --col-black-3: #24272d;
 }
 
 /* --- RESET & GLOBAL --- */
 html {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--col-white-1);
-  color: var(--color-black-3);
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background-color: var(--col-white-1); color: var(--col-black-3);
   overflow: hidden;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--col-white-1);
-  color: var(--color-black-3);
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background-color: var(--col-white-1); color: var(--col-black-3);
   overflow: hidden;
 }
 
 .main-layout {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  position: relative; width: 100%; height: 100vh;
+  overflow-y: auto; overflow-x: hidden;
   font-family: var(--font-primary);
 }
 
-button { font-family: var(--font-primary); }
-input { font-family: var(--font-primary); }
-textarea { font-family: var(--font-primary); }
-select { font-family: var(--font-primary); }
-
-#root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
+button, input, textarea, select { font-family: var(--font-primary); }
+#root { display: flex; flex-direction: column; height: 100%; }
 .navbar { font-family: var(--font-navbar) !important; }
 .navbar * { font-family: var(--font-navbar) !important; }
 
@@ -67,197 +47,139 @@ select { font-family: var(--font-primary); }
   display: flex;
   width: 100%;
   margin: 0 auto;
-  padding: 0 30px;
+  /* Padding pagina */
+  padding: 40px;
   position: relative;
   align-items: flex-start;
-  margin-top: 20px;
+  /* Gap tra le due colonne */
+  gap: 40px; 
+  box-sizing: border-box; /* Assicura che il padding non aumenti la larghezza totale */
 }
 
+/* COLONNA SINISTRA (3D Sticky) */
 .left-sticky-column {
-  flex: 1;
-  position: -webkit-sticky;
-  position: sticky;
+  /* Larghezza fissa */
+  width: 65%; 
+  /* Flessibilità bloccata */
+  flex: 0 0 65%;
+  
+  position: -webkit-sticky; position: sticky;
   top: 0;
-  max-width: 65%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 20px 30px 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
   box-sizing: border-box;
 }
 
-/* --- CANVAS FRAME STYLES --- */
-.canvas-frame {
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  margin-top: 30px;
-  background: #f4f4f4;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
-  z-index: 10;
+/* COLONNA DESTRA (Scrollable Options) */
+.right-scroll-column {
+  /* CALCOLO PRECISO: 35% meno il gap di 40px. 
+     Così 65% + (35% - 40px) + 40px gap = 100% larghezza padre */
+  width: calc(35% - 40px);
+  /* Flessibilità bloccata */
+  flex: 0 0 calc(35% - 40px);
+  
+  padding-top: 30px;
+  /* Assicuriamo che non ci siano overflow interni */
+  min-width: 300px; 
 }
+
+/* --- CANVAS FRAME --- */
+.canvas-frame {
+  width: 100%; height: 100%; border-radius: 12px;
+  overflow: hidden; position: relative; margin-top: 30px;
+  background: #f4f4f4; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  z-index: 10;
+  cursor: grab;
+}
+.canvas-frame:active { cursor: grabbing; }
 
 /* BLACKOUT OVERLAY */
 .blackout-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #000000;
-  z-index: 15; 
-  opacity: 0;
-  pointer-events: none;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background-color: #000000; z-index: 15;
+  opacity: 0; pointer-events: none;
   transition: opacity 0.4s ease-in-out;
 }
-
-.blackout-overlay.active {
-  opacity: 1;
-  pointer-events: auto;
-}
+.blackout-overlay.active { opacity: 1; pointer-events: auto; }
 
 /* FULLSCREEN NATIVO */
 .canvas-frame:fullscreen {
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  background: #f4f4f4; 
-  display: flex;
+  width: 100vw; height: 100vh; margin: 0; padding: 0;
+  border-radius: 0; background: #f4f4f4; display: flex;
 }
-
 .canvas-frame:-webkit-full-screen {
-  width: 100%;
-  height: 100%;
-  border-radius: 0;
-  margin: 0;
+  width: 100%; height: 100%; border-radius: 0; margin: 0;
   background: #f4f4f4;
 }
 
 .canvas-frame canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  outline: none;
+  display: block; width: 100% !important; height: 100% !important; outline: none;
 }
 
-/* --- UI OVERLAY & BUTTONS --- */
+/* --- UI BUTTONS --- */
 .canvas-ui-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 20;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 20;
 }
 
-/* --- STILE BOTTONI MINIMAL & PROFESSIONAL --- */
 .ui-btn {
   pointer-events: auto;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Palette 2.1 (Bianco) */
+  display: flex; align-items: center; justify-content: center;
   background-color: var(--col-white-1); 
-  /* Palette 2.7 (Grigio scuro) per icona base */
-  color: var(--color-black-2); 
-  border: none; 
-  /* Niente trasformazioni, solo colore/opacità */
-  transition: background-color 0.3s ease, color 0.3s ease, opacity 0.3s ease;
-  width: 50px; 
-  height: 50px; 
-  border-radius: 8px;
+  color: var(--col-black-2);
+  border: 2px solid transparent; 
+  box-shadow: none;
+  transition: background-color 0.3s ease, border-color 0.2s ease, color 0.2s ease;
+  width: 52px; height: 52px; border-radius: 6px;
 }
 
-/* HOVER: Sfondo chiarissimo e Icona ORO */
-.ui-btn:hover {
-  background-color: var(--col-white-2); 
-  color: var(--col-gold); 
-}
+.ui-btn:hover { background-color: var(--col-white-3); }
 
-/* POSIZIONAMENTO PULSANTI */
-.btn-fullscreen {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-}
-
+.btn-fullscreen { position: absolute; top: 15px; right: 15px; font-size: 1.2rem; }
 .view-controls-vertical {
-  position: absolute;
-  top: 50%;
-  left: 20px;
+  position: absolute; top: 50%; left: 15px;
   transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px; 
+  display: flex; flex-direction: column; gap: 8px;
 }
 
 .btn-view.active {
-  background-color: var(--color-black-3); 
-  color: var(--col-white-1);
+  background-color: var(--col-white-1);
+  border-color: var(--col-gold);
+  color: var(--col-gold);
 }
+.btn-view.active:hover { background-color: var(--col-white-3); }
 
-/* Hover su Active: Rimane scuro per stabilità, magari leggermente più chiaro */
-.btn-view.active:hover {
-  background-color: var(--color-black-2); 
-  color: var(--col-white-1);
-}
-
-/* --- COLONNA DESTRA (OPZIONI) --- */
-.right-scroll-column {
-  padding: 20px;
-  box-sizing: border-box;
-  background: var(--col-white-1);
-  z-index: 15;
-  width: 32%;
-}
-
-.sidebar-header {
-  margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--col-white-3);
-}
+/* --- SIDEBAR COMPONENTS --- */
+.sidebar-header { margin-bottom: 40px; }
 
 .brand-title {
-  margin: 0;
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  line-height: 1;
-  color: var(--color-black-3);
+  margin: 0; font-size: 2.2rem; font-weight: 800;
+  letter-spacing: -1px; line-height: 1; color: var(--col-black-3);
 }
 
 .config-subtitle {
-  margin: 10px 0 0;
-  color: var(--color-black-1);
-  font-size: 1rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  margin: 10px 0 0; color: var(--col-black-1);
+  font-size: 1rem; letter-spacing: 1px; text-transform: uppercase;
 }
 
-/* INTERFACE STYLES */
-.accordion-item { border-bottom: 1px solid var(--col-white-3); margin-bottom: 0; }
+.accordion-item {
+  border-bottom: 1px solid var(--col-white-3);
+  margin-bottom: 0;
+  /* Rimosso max-width per far riempire la colonna correttamente */
+  width: 100%; 
+}
 .accordion-header { padding: 25px 0; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; justify-content: space-between; }
 .accordion-content { padding-bottom: 30px; }
 
 .selector-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-  gap: 10px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 10px;
 }
 
 .texture-option {
-  aspect-ratio: 1;
-  border-radius: 6px;
-  cursor: pointer;
+  aspect-ratio: 1; border-radius: 6px; cursor: pointer;
   border: 1px solid var(--col-white-4);
-  overflow: hidden;
-  position: relative;
+  overflow: hidden; position: relative;
   transition: transform 0.2s, border-color 0.2s;
 }
 
@@ -267,53 +189,36 @@ select { font-family: var(--font-primary); }
 
 /* SPINNER & LOADERS */
 .spinner-canvas {
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border: 4px solid var(--col-white-4);
-  border-top-color: var(--color-black-3);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  border-top-color: var(--col-black-3);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
 }
 
 .spinner {
-  width: 20px;
-  height: 20px;
+  width: 20px; height: 20px;
   border: 3px solid rgba(0,0,0,0.1);
   border-top-color: var(--col-gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
 }
 
 .loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.7);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255,255,255,0.7); z-index: 5;
+  display: flex; align-items: center; justify-content: center;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* --- RIEPILOGO --- */
 .final-summary-section {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  padding: 100px 20px;
+  width: 100%; max-width: 1400px; margin: 0 auto;
+  display: flex; padding: 100px 20px;
   background: var(--col-white-1);
   border-top: 1px solid var(--col-white-3);
-  position: relative;
-  z-index: 20;
+  position: relative; z-index: 20;
 }
 
 .summary-left { width: 60%; padding-right: 60px; }
@@ -326,15 +231,15 @@ select { font-family: var(--font-primary); }
 .summary-list { list-style: none; padding: 0; margin: 40px 0; font-size: 1.1rem; }
 .summary-list li { display: flex; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--col-white-2); }
 
-.total-price-box { display: flex; justify-content: space-between; font-size: 1.8rem; font-weight: 800; margin-bottom: 40px; color: var(--color-black-3); }
-.action-btn { width: 100%; padding: 25px; background: var(--color-black-3); color: var(--col-white-1); border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; font-size: 1rem; transition: background 0.3s; }
+.total-price-box { display: flex; justify-content: space-between; font-size: 1.8rem; font-weight: 800; margin-bottom: 40px; color: var(--col-black-3); }
+.action-btn { width: 100%; padding: 25px; background: var(--col-black-3); color: var(--col-white-1); border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; font-size: 1rem; transition: background 0.3s; }
 .action-btn:hover { background: #000; }
 
 /* --- MOBILE --- */
 @media screen and (max-width: 1024px) {
-  .configurator-section { flex-direction: column; margin-top: 0; }
-  .left-sticky-column { position: relative; top: 0; width: 100%; height: 60vh; margin-bottom: 20px; padding: 0; }
-  .right-scroll-column { width: 100%; margin-left: 0; padding: 0 20px; min-height: auto; }
+  .configurator-section { flex-direction: column; margin-top: 0; gap: 0; }
+  .left-sticky-column { position: relative; top: 0; width: 100%; max-width: 100%; flex: auto; height: 60vh; margin-bottom: 20px; padding: 0; }
+  .right-scroll-column { width: 100%; flex: auto; margin-left: 0; padding: 0 20px; min-height: auto; }
   .final-summary-section { flex-direction: column; padding: 40px 20px; }
   .summary-left { width: 100%; padding: 0; }
   .summary-right { width: 100%; padding: 0; }

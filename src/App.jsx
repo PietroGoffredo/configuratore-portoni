@@ -2,8 +2,7 @@ import React, { useState, Suspense, useTransition, useEffect, useRef } from 'rea
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Html } from '@react-three/drei';
 import * as THREE from 'three';
-// Importiamo le icone per le Porte e per il Fullscreen (Tabler Icons)
-import { TbDoorEnter, TbDoorExit, TbMaximize, TbMinimize } from "react-icons/tb";
+import { TbDoorEnter, TbDoorExit, TbMaximize, TbMinimize } from "react-icons/tb"; 
 
 import Navbar from './components/ui/Navbar';
 import Footer from './components/ui/Footer';
@@ -66,7 +65,11 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const canvasContainerRef = useRef(null); 
   
+  // Stato per la transizione NERA (Blackout) - Solo per cambio vista
   const [isBlackout, setIsBlackout] = useState(false);
+  
+  // Stato logico per impedire spam di click (Debounce/Lock)
+  const [isSwitching, setIsSwitching] = useState(false);
 
   const [isPending, startTransition] = useTransition();
   const [loadingState, setLoadingState] = useState({ category: null, id: null });
@@ -80,19 +83,38 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // 2. CAMBIO VISTA (Con Blackout)
+  // 2. CAMBIO VISTA (Con Blackout e Logic Lock)
   const handleViewChange = (mode) => {
-    if (mode === viewMode) return;
+    // Se la vista è già quella o se stiamo già cambiando, ignora il click
+    if (mode === viewMode || isSwitching) return;
+    
+    // Attiva il blocco logico
+    setIsSwitching(true);
+    
+    // 1. Inizia Fade Out (schermo nero)
     setIsBlackout(true); 
+    
+    // Attendi la durata della transizione CSS (0.4s)
     setTimeout(() => {
+      // 2. Cambia il modello mentre è coperto
       setViewMode(mode); 
-      setTimeout(() => setIsBlackout(false), 100); 
+      
+      // Piccola pausa per il rendering React
+      setTimeout(() => {
+        // 3. Inizia Fade In (rimuovi nero)
+        setIsBlackout(false); 
+        
+        // 4. Rimuovi il blocco SOLO quando il fade-in è finito (altri 0.4s)
+        setTimeout(() => {
+            setIsSwitching(false);
+        }, 400); 
+      }, 100); 
     }, 400); 
   };
 
-  // 3. TOGGLE FULLSCREEN (Con mini Blackout per glitch)
+  // 3. TOGGLE FULLSCREEN (Istantaneo - Nessuna transizione)
   const toggleFullscreen = async () => {
-    setIsBlackout(true);
+    // Nessun blackout, nessuna attesa. Azione nativa pura.
     try {
       if (!document.fullscreenElement) {
         if (canvasContainerRef.current) await canvasContainerRef.current.requestFullscreen();
@@ -102,7 +124,6 @@ export default function App() {
     } catch (err) {
       console.error("Errore Fullscreen:", err);
     }
-    setTimeout(() => setIsBlackout(false), 150); 
   };
 
   const preloadImage = (url) => {
@@ -145,36 +166,33 @@ export default function App() {
         <div className="left-sticky-column">
           <div className="canvas-frame" ref={canvasContainerRef}>
             
+            {/* Blackout attivo SOLO durante handleViewChange */}
             <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
 
             <div className="canvas-ui-overlay">
-                {/* BOTTONE FULLSCREEN */}
                 <button 
                   className="ui-btn btn-fullscreen" 
                   onClick={toggleFullscreen}
                   title={isFullscreen ? "Chiudi" : "Schermo Intero"}
                 >
-                  {/* Icona Dinamica: Maximize se chiuso, Minimize se aperto */}
-                  {isFullscreen ? <TbMinimize size={28} /> : <TbMaximize size={28} />}
+                  {isFullscreen ? <TbMinimize size={26} /> : <TbMaximize size={26} />}
                 </button>
 
                 <div className="view-controls-vertical">
-                  {/* BOTTONE ESTERNO */}
                   <button 
                     className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
                     onClick={() => handleViewChange('external')}
                     title="Vista Esterna"
                   >
-                    <TbDoorEnter size={28} />
+                    <TbDoorEnter size={26} />
                   </button>
                   
-                  {/* BOTTONE INTERNO */}
                   <button 
                     className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
                     onClick={() => handleViewChange('internal')}
                     title="Vista Interna"
                   >
-                    <TbDoorExit size={28} />
+                    <TbDoorExit size={26} />
                   </button>
                 </div>
             </div>
