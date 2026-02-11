@@ -117,6 +117,80 @@ export default function Interface({
         />
 
       </AccordionItem>
+
+
+
+      {/* PROVA */}
+      <AccordionItem title="Interni" isOpen={openSections['interni']} onClick={() => toggleSection('interni')}>
+        
+        {/* 1. Laccati Interni */}
+        <TextureSelector 
+          label="Laccati (Opachi)" 
+          category="int_main" options={laccati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 2. HPL Interni */}
+        <TextureSelector 
+          label="HPL (Alta Resistenza)" 
+          category="int_main" options={hpl} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 3. Nobilitati Interni */}
+        <TextureSelector 
+          label="Nobilitato" 
+          category="int_main" options={nobilitati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+      </AccordionItem><AccordionItem title="Interni" isOpen={openSections['interni']} onClick={() => toggleSection('interni')}>
+        
+        {/* 1. Laccati Interni */}
+        <TextureSelector 
+          label="Laccati (Opachi)" 
+          category="int_main" options={laccati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 2. HPL Interni */}
+        <TextureSelector 
+          label="HPL (Alta Resistenza)" 
+          category="int_main" options={hpl} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 3. Nobilitati Interni */}
+        <TextureSelector 
+          label="Nobilitato" 
+          category="int_main" options={nobilitati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+      </AccordionItem><AccordionItem title="Interni" isOpen={openSections['interni']} onClick={() => toggleSection('interni')}>
+        
+        {/* 1. Laccati Interni */}
+        <TextureSelector 
+          label="Laccati (Opachi)" 
+          category="int_main" options={laccati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 2. HPL Interni */}
+        <TextureSelector 
+          label="HPL (Alta Resistenza)" 
+          category="int_main" options={hpl} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+        {/* 3. Nobilitati Interni */}
+        <TextureSelector 
+          label="Nobilitato" 
+          category="int_main" options={nobilitati} 
+          selectedId={intState.finish.id} onSelect={intState.setFinish} loadingState={loadingState} 
+        />
+
+      </AccordionItem>
     </div>
   );
 }

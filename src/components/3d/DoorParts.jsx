@@ -8,7 +8,7 @@ const getFirstGeometry = (nodes) => {
   return meshName ? nodes[meshName].geometry : null;
 };
 
-// --- MATERIALI ---
+// --- MATERIALI SEMPLIFICATI (Nessuna transizione opacità) ---
 
 const MaterialeSolido = ({ config }) => {
   return (
@@ -26,88 +26,49 @@ const MaterialeTexturizzato = ({ config }) => {
   const basePath = `/textures/${config.folder}/`;
   const mapsConfig = {};
 
-  // 1. Mappa Colore
-  if (config.isTextured || config.type === 'hpl_tex') {
-    mapsConfig.map = basePath + 'color.jpg';
-  }
-  
-  // 2. Mappe Dati Standard
+  if (config.isTextured || config.type === 'hpl_tex') mapsConfig.map = basePath + 'color.jpg';
   mapsConfig.normalMap = basePath + 'normal.png';
   mapsConfig.roughnessMap = basePath + 'roughness.jpg';
-  
-  // 3. AO Map (Esclusione specifica per HPL 5004 che non ce l'ha)
-  if (config.id !== 'hpl_5004') {
-    mapsConfig.aoMap = basePath + 'ao.jpg';
-  }
+  if (config.id !== 'hpl_5004') mapsConfig.aoMap = basePath + 'ao.jpg';
 
   const textures = useTexture(mapsConfig);
 
   useMemo(() => {
-    // Configurazione ripetizione texture
     Object.values(textures).forEach((t) => {
-      if (t) {
-        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      if (t) { 
+        t.wrapS = t.wrapT = THREE.RepeatWrapping; 
         t.repeat.set(2, 2); 
-        t.colorSpace = THREE.SRGBColorSpace;
+        t.colorSpace = THREE.SRGBColorSpace; 
       }
     });
-    
-    // Correzione Color Space: Dati lineari per mappe fisiche (Normal, Roughness, AO)
     const dataMaps = [textures.normalMap, textures.roughnessMap, textures.aoMap];
-    dataMaps.forEach(t => { 
-        if(t) t.colorSpace = THREE.NoColorSpace; 
-    });
-    
-    // La mappa colore DEVE essere sRGB
+    dataMaps.forEach(t => { if(t) t.colorSpace = THREE.NoColorSpace; });
     if(textures.map) textures.map.colorSpace = THREE.SRGBColorSpace;
-
   }, [textures]);
 
-  const commonProps = {
-    normalMap: textures.normalMap,
-    roughnessMap: textures.roughnessMap,
-    aoMap: textures.aoMap,
-    side: THREE.DoubleSide,
-    shadowSide: THREE.BackSide, 
+  const commonProps = { 
+    normalMap: textures.normalMap, 
+    roughnessMap: textures.roughnessMap, 
+    aoMap: textures.aoMap, 
+    side: THREE.DoubleSide, 
+    shadowSide: THREE.BackSide 
   };
 
   if (config.isHybrid) {
-    return (
-      <meshStandardMaterial 
-        color={config.hex} 
-        aoMapIntensity={0.5}
-        roughness={1} 
-        envMapIntensity={0.5}
-        {...commonProps}
-      />
-    );
+    return <meshStandardMaterial color={config.hex} aoMapIntensity={0.5} roughness={1} envMapIntensity={0.5} {...commonProps} />;
   }
-
-  return (
-    <meshStandardMaterial 
-      map={textures.map}
-      aoMapIntensity={0.8} // Intensità AO standard
-      envMapIntensity={0.8}
-      {...commonProps}
-    />
-  );
+  return <meshStandardMaterial map={textures.map} aoMapIntensity={0.8} envMapIntensity={0.8} {...commonProps} />;
 };
 
-// --- COMPONENTI PARTE SINGOLA ---
+// --- PARTI FISSE ---
 
 const PlainPart = ({ path, color }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
   if (!geometry) return null;
-
   return (
     <mesh geometry={geometry} castShadow receiveShadow frustumCulled={false}>
-      <meshStandardMaterial 
-        color={color} 
-        roughness={0.5} 
-        side={THREE.DoubleSide} 
-        shadowSide={THREE.BackSide} 
-      />
+      <meshStandardMaterial color={color} roughness={0.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
     </mesh>
   );
 };
@@ -115,36 +76,24 @@ const PlainPart = ({ path, color }) => {
 const MetalPart = ({ path }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
-  if (!geometry) return null;
-
   const propsMetallo = useTexture({
     map: '/textures/altro/metallo_spazzolato/color.jpg',
     normalMap: '/textures/altro/metallo_spazzolato/normal.png',
     roughnessMap: '/textures/altro/metallo_spazzolato/roughness.jpg',
     aoMap: '/textures/altro/metallo_spazzolato/ao.jpg',
   });
-
   useMemo(() => {
-    if(propsMetallo.map) {
-        propsMetallo.map.wrapS = propsMetallo.map.wrapT = THREE.RepeatWrapping;
-        propsMetallo.map.colorSpace = THREE.SRGBColorSpace;
-    }
-    if(propsMetallo.normalMap) propsMetallo.normalMap.colorSpace = THREE.NoColorSpace;
-    if(propsMetallo.roughnessMap) propsMetallo.roughnessMap.colorSpace = THREE.NoColorSpace;
-    if(propsMetallo.aoMap) propsMetallo.aoMap.colorSpace = THREE.NoColorSpace;
+    Object.values(propsMetallo).forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
+    propsMetallo.map.colorSpace = THREE.SRGBColorSpace;
+    propsMetallo.normalMap.colorSpace = THREE.NoColorSpace;
+    propsMetallo.roughnessMap.colorSpace = THREE.NoColorSpace;
+    propsMetallo.aoMap.colorSpace = THREE.NoColorSpace;
   }, [propsMetallo]);
 
+  if (!geometry) return null;
   return (
     <mesh geometry={geometry} castShadow receiveShadow frustumCulled={false}>
-       <meshStandardMaterial 
-         {...propsMetallo} 
-         color="#ffffff" 
-         metalness={1.0} 
-         roughness={0.3} 
-         envMapIntensity={1.5} 
-         side={THREE.DoubleSide} 
-         shadowSide={THREE.BackSide}
-       />
+       <meshStandardMaterial {...propsMetallo} color="#ffffff" metalness={1.0} roughness={0.3} envMapIntensity={1.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
     </mesh>
   );
 };
@@ -153,27 +102,53 @@ const ConfigurablePart = ({ path, config }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
   if (!geometry) return null;
-
   return (
     <mesh geometry={geometry} castShadow receiveShadow frustumCulled={false}>
-      {config.isSolid ? (
-        <MaterialeSolido key={config.id + '_solid'} config={config} />
-      ) : (
-        <MaterialeTexturizzato key={config.id + '_tex'} config={config} />
-      )}
+      {config.isSolid ? <MaterialeSolido config={config} /> : <MaterialeTexturizzato config={config} />}
     </mesh>
   );
 };
 
+// --- ENVIRONMENT PART ---
+const EnvironmentPart = ({ modelPath, textureFolder, repeat = 4 }) => {
+  const { nodes } = useGLTF(modelPath);
+  const geometry = getFirstGeometry(nodes);
+  const textures = useTexture({
+    map: `${textureFolder}/color.jpg`,
+    normalMap: `${textureFolder}/normal.png`,
+    roughnessMap: `${textureFolder}/roughness.jpg`,
+    aoMap: `${textureFolder}/ao.jpg`,
+  });
+  useMemo(() => {
+    Object.values(textures).forEach(t => { if (t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); } });
+    textures.map.colorSpace = THREE.SRGBColorSpace;
+    textures.normalMap.colorSpace = THREE.NoColorSpace;
+    textures.roughnessMap.colorSpace = THREE.NoColorSpace;
+    textures.aoMap.colorSpace = THREE.NoColorSpace;
+  }, [textures, repeat]);
 
-// --- ASSEMBLAGGIO ---
-
-export function Nordic01Esterno({ config }) {
-  const basePath = '/models/nordic/nordic_01/';
-  const isHPL = config.category === 'hpl';
-  
+  if (!geometry) return null;
   return (
-    <group dispose={null}>
+    <mesh geometry={geometry} receiveShadow castShadow frustumCulled={false}>
+      <meshStandardMaterial {...textures} side={THREE.DoubleSide} shadowSide={THREE.BackSide} envMapIntensity={0.5} />
+    </mesh>
+  );
+};
+
+// --- GRUPPI ---
+// Usiamo la prop "visible" di Three.js. L'oggetto rimane in scena ma non renderizzato. 
+// Nessun unmount, nessun fade, switch istantaneo.
+
+export function GruppoEsterno({ config, viewMode }) {
+  const basePath = '/models/nordic/nordic_01/';
+  const basePathMuro = '/models/nordic/muro/';
+  const texPavimentoExt = '/textures/ambiente/pavimento_ext'; 
+  const isHPL = config.category === 'hpl';
+  const show = viewMode === 'external';
+
+  return (
+    <group visible={show}>
+      <EnvironmentPart modelPath={`${basePathMuro}pavimento_esterno.glb`} textureFolder={texPavimentoExt} repeat={6} />
       <MetalPart path={`${basePath}anello_pannello_esterno.glb`} />
       <PlainPart path={`${basePath}core_pannello_esterno.glb`} color={isHPL ? '#24272d' : config.hex} />
       <ConfigurablePart path={`${basePath}overlay_pannello_esterno.glb`} config={config} />
@@ -181,36 +156,37 @@ export function Nordic01Esterno({ config }) {
   );
 }
 
-export function PannelloInterno({ config }) {
+export function GruppoInterno({ config, viewMode }) {
   const path = '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb';
+  const basePathMuro = '/models/nordic/muro/';
+  const texPavimentoInt = '/textures/ambiente/pavimento_int';
+  const show = viewMode === 'internal';
+
   return (
-    <group dispose={null}>
+    <group visible={show}>
+      <EnvironmentPart modelPath={`${basePathMuro}pavimento_interno.glb`} textureFolder={texPavimentoInt} repeat={6} />
       <ConfigurablePart path={path} config={config} />
     </group>
   );
 }
 
-// STRUTTURA & TELAIO (Texture Legno Okume Applicata)
-export function StrutturaCompleta() {
+export function GruppoComune() {
   const pathStruttura = '/models/nordic/struttura/struttura.glb';
   const pathTelaio = '/models/nordic/telaio/telaio.glb';
-  
-  // Configurazione fissa per Legno Okume
-  const okumeConfig = {
-    folder: 'altro/legno_okume', // public/textures/altro/legno_okume
-    isTextured: true,
-    id: 'legno_okume_fixed' // ID fittizio per evitare conflitti
-  };
+  const pathMuro = '/models/nordic/muro/muro.glb';
+  const texMuro = '/textures/ambiente/muro';
+  const okumeConfig = { folder: 'altro/legno_okume', isTextured: true, id: 'legno_okume_fixed' };
 
   return (
-    <group dispose={null}>
-      {/* Usiamo ConfigurablePart per applicare la texture */}
+    <group visible={true}>
+      <EnvironmentPart modelPath={pathMuro} textureFolder={texMuro} repeat={4} />
       <ConfigurablePart path={pathStruttura} config={okumeConfig} />
       <ConfigurablePart path={pathTelaio} config={okumeConfig} />
     </group>
   );
 }
 
+// Preload dei file
 const files = [
   '/models/nordic/nordic_01/anello_pannello_esterno.glb',
   '/models/nordic/nordic_01/core_pannello_esterno.glb',
@@ -218,6 +194,9 @@ const files = [
   '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb',
   '/models/nordic/struttura/struttura.glb',
   '/models/nordic/telaio/telaio.glb',
+  '/models/nordic/muro/muro.glb',
+  '/models/nordic/muro/pavimento_interno.glb',
+  '/models/nordic/muro/pavimento_esterno.glb',
   '/textures/altro/metallo_spazzolato/color.jpg',
   '/textures/altro/legno_okume/color.jpg'
 ];
