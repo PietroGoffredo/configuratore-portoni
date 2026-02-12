@@ -1,8 +1,8 @@
 import React, { useState, Suspense, useTransition, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, Html } from '@react-three/drei';
+import { OrbitControls, Environment, Html, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
-import { TbDoorEnter, TbDoorExit, TbMaximize, TbMinimize } from "react-icons/tb"; 
+import { TbDoorEnter, TbDoorExit, TbMaximize, TbMinimize, TbPhoto, TbHome, TbBuilding, TbHomeEdit } from "react-icons/tb"; 
 
 import Navbar from './components/ui/Navbar';
 import Footer from './components/ui/Footer';
@@ -14,8 +14,9 @@ import { TEXTURES_DATA } from './constants/data';
 import './styles/App.css';
 
 // --- CONTROLLO CAMERA ---
-function CameraController({ viewMode }) {
+function CameraController({ viewMode, scenario }) {
   const controlsRef = useRef();
+  
   useEffect(() => {
     if (controlsRef.current) {
       const controls = controlsRef.current;
@@ -27,7 +28,7 @@ function CameraController({ viewMode }) {
       controls.object.lookAt(0, 1, 0);
       controls.update();
     }
-  }, [viewMode]);
+  }, [viewMode, scenario]);
   
   return (
     <OrbitControls 
@@ -51,6 +52,34 @@ function Loader() {
   );
 }
 
+// --- SCENARIO 3: STUDIO PORSCHE STYLE ---
+function StudioScene() {
+  return (
+    <>
+      <Environment preset="city" background={false} blur={1} />
+      <ambientLight intensity={0.7} />
+      <spotLight 
+        position={[10, 10, 10]} 
+        angle={0.15} 
+        penumbra={1} 
+        intensity={1} 
+        castShadow 
+        shadow-bias={-0.0001}
+      />
+      <pointLight position={[-10, -10, -10]} intensity={0.5} />
+      <ContactShadows 
+        position={[0, -1.055, 0]} 
+        opacity={0.6} 
+        scale={20} 
+        blur={2} 
+        far={4} 
+        resolution={1024} 
+        color="#000000" 
+      />
+    </>
+  );
+}
+
 // --- APP PRINCIPALE ---
 export default function App() {
   const defaultExt = TEXTURES_DATA.finishes.find(f => f.id === 'hpl_113') || TEXTURES_DATA.finishes[0];
@@ -65,16 +94,17 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const canvasContainerRef = useRef(null); 
   
-  // Stato per la transizione NERA (Blackout) - Solo per cambio vista
   const [isBlackout, setIsBlackout] = useState(false);
-  
-  // Stato logico per impedire spam di click (Debounce/Lock)
   const [isSwitching, setIsSwitching] = useState(false);
+
+  const [scenario, setScenario] = useState('studio');
+  const [isScenarioMenuOpen, setIsScenarioMenuOpen] = useState(false);
+  // NUOVO: Stato separato per cambio scenario (senza blackout)
+  const [isScenarioSwitching, setIsScenarioSwitching] = useState(false);
 
   const [isPending, startTransition] = useTransition();
   const [loadingState, setLoadingState] = useState({ category: null, id: null });
 
-  // 1. SYNC FULLSCREEN
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -83,28 +113,14 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // 2. CAMBIO VISTA (Con Blackout e Logic Lock)
   const handleViewChange = (mode) => {
-    // Se la vista è già quella o se stiamo già cambiando, ignora il click
     if (mode === viewMode || isSwitching) return;
-    
-    // Attiva il blocco logico
     setIsSwitching(true);
-    
-    // 1. Inizia Fade Out (schermo nero)
     setIsBlackout(true); 
-    
-    // Attendi la durata della transizione CSS (0.4s)
     setTimeout(() => {
-      // 2. Cambia il modello mentre è coperto
       setViewMode(mode); 
-      
-      // Piccola pausa per il rendering React
       setTimeout(() => {
-        // 3. Inizia Fade In (rimuovi nero)
         setIsBlackout(false); 
-        
-        // 4. Rimuovi il blocco SOLO quando il fade-in è finito (altri 0.4s)
         setTimeout(() => {
             setIsSwitching(false);
         }, 400); 
@@ -112,9 +128,21 @@ export default function App() {
     }, 400); 
   };
 
-  // 3. TOGGLE FULLSCREEN (Istantaneo - Nessuna transizione)
+  // MODIFICA 5: Cambio scenario senza transizione nera, ma bloccando i bottoni
+  const handleScenarioChange = (newScenario) => {
+    if (newScenario === scenario || isScenarioSwitching) return;
+    
+    setIsScenarioSwitching(true);
+    setScenario(newScenario);
+    setIsScenarioMenuOpen(false);
+
+    // Sblocca i bottoni dello scenario dopo poco (simula un mini-caricamento per feedback logico)
+    setTimeout(() => {
+        setIsScenarioSwitching(false);
+    }, 500); 
+  };
+
   const toggleFullscreen = async () => {
-    // Nessun blackout, nessuna attesa. Azione nativa pura.
     try {
       if (!document.fullscreenElement) {
         if (canvasContainerRef.current) await canvasContainerRef.current.requestFullscreen();
@@ -158,6 +186,8 @@ export default function App() {
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
+  const backgroundColor = scenario === 'studio' ? '#ffffff' : '#f4f4f4';
+
   return (
     <div className="main-layout" id="main-scroll-container">
       <Navbar />
@@ -166,7 +196,6 @@ export default function App() {
         <div className="left-sticky-column">
           <div className="canvas-frame" ref={canvasContainerRef}>
             
-            {/* Blackout attivo SOLO durante handleViewChange */}
             <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
 
             <div className="canvas-ui-overlay">
@@ -178,45 +207,101 @@ export default function App() {
                   {isFullscreen ? <TbMinimize size={26} /> : <TbMaximize size={26} />}
                 </button>
 
-                <div className="view-controls-vertical">
+                {/* MODIFICA 1: Div sempre renderizzato ma classe CSS "hidden-controls" lo nasconde con animazione */}
+                <div className={`view-controls-vertical ${scenario === 'studio' ? 'hidden-controls' : ''}`}>
+                    <button 
+                        className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
+                        onClick={() => handleViewChange('external')}
+                        title="Vista Esterna"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <TbDoorEnter size={26} />
+                    </button>
+                    
+                    <button 
+                        className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
+                        onClick={() => handleViewChange('internal')}
+                        title="Vista Interna"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <TbDoorExit size={26} />
+                    </button>
+                </div>
+
+                <div className="scenario-control-container">
+                  <div className={`scenario-popup-menu ${isScenarioMenuOpen ? 'open' : ''}`}>
+                    <button 
+                      className={`ui-btn scenario-option ${scenario === 'studio' ? 'active' : ''}`}
+                      onClick={() => handleScenarioChange('studio')}
+                      title="Studio Neutro"
+                      /* MODIFICA 3: pointerEvents impedisce il click finché è in transizione, nessuna opacità */
+                      style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                    >
+                      <TbPhoto size={22} />
+                    </button>
+                    <button 
+                      className={`ui-btn scenario-option ${scenario === 'modern' ? 'active' : ''}`}
+                      onClick={() => handleScenarioChange('modern')}
+                      title="Villa Moderna"
+                      style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                    >
+                      <TbBuilding size={22} />
+                    </button>
+                    <button 
+                      className={`ui-btn scenario-option ${scenario === 'classic' ? 'active' : ''}`}
+                      onClick={() => handleScenarioChange('classic')}
+                      title="Villa Classica"
+                      style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                    >
+                      <TbHome size={22} />
+                    </button>
+                  </div>
+
+                  {/* MODIFICA 2: Bottone sempre cliccabile per aprire/chiudere il menu */}
                   <button 
-                    className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
-                    onClick={() => handleViewChange('external')}
-                    title="Vista Esterna"
+                    className={`ui-btn ${isScenarioMenuOpen ? 'active' : ''}`}
+                    onClick={() => setIsScenarioMenuOpen(!isScenarioMenuOpen)}
+                    title="Cambia Ambiente"
                   >
-                    <TbDoorEnter size={26} />
-                  </button>
-                  
-                  <button 
-                    className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
-                    onClick={() => handleViewChange('internal')}
-                    title="Vista Interna"
-                  >
-                    <TbDoorExit size={26} />
+                    <TbHomeEdit size={26} />
                   </button>
                 </div>
+
             </div>
 
             <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 1.5, 5], fov: 40 }}>
-              <color attach="background" args={['#f4f4f4']} />
-              <fog attach="fog" args={['#f4f4f4', 10, 40]} />
-              <ambientLight intensity={0.6} />
-              <directionalLight 
-                position={[8, 12, 5]} 
-                intensity={1.5} 
-                castShadow 
-                shadow-mapSize={[2048, 2048]} 
-                shadow-bias={-0.0001}
-              />
-              <Environment preset="city" blur={0.8} />
+              <color attach="background" args={[backgroundColor]} />
+              <fog attach="fog" args={[backgroundColor, 10, 40]} />
+              
               <Suspense fallback={<Loader />}>
                   <group position={[0, -1.05, 0]}>
-                      <GruppoComune />
-                      <GruppoInterno config={intFinish} viewMode={viewMode} />
-                      <GruppoEsterno config={extFinish} viewMode={viewMode} />
+                      
+                      {scenario === 'studio' ? (
+                          <StudioScene />
+                      ) : (
+                          <>
+                            <ambientLight intensity={0.6} />
+                            {/* MODIFICA 4: Aggiunto bias normalizzato per togliere l'acne (triangoli neri) */}
+                            <directionalLight 
+                              position={[8, 12, 5]} 
+                              intensity={1.5} 
+                              castShadow 
+                              shadow-mapSize={[2048, 2048]} 
+                              shadow-bias={-0.0005}
+                              shadow-normalBias={0.04}
+                            />
+                            <Environment preset="city" blur={0.8} />
+                          </>
+                      )}
+
+                      <group>
+                        <GruppoComune scenario={scenario} />
+                        <GruppoInterno config={intFinish} viewMode={viewMode} scenario={scenario} />
+                        <GruppoEsterno config={extFinish} viewMode={viewMode} scenario={scenario} />
+                      </group>
                   </group>
               </Suspense>
-              <CameraController viewMode={viewMode} />
+              <CameraController viewMode={viewMode} scenario={scenario} />
             </Canvas>
           </div>
         </div>

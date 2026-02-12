@@ -8,8 +8,7 @@ const getFirstGeometry = (nodes) => {
   return meshName ? nodes[meshName].geometry : null;
 };
 
-// --- MATERIALI SEMPLIFICATI (Nessuna transizione opacità) ---
-
+// --- MATERIALI ---
 const MaterialeSolido = ({ config }) => {
   return (
     <meshStandardMaterial 
@@ -61,7 +60,6 @@ const MaterialeTexturizzato = ({ config }) => {
 };
 
 // --- PARTI FISSE ---
-
 const PlainPart = ({ path, color }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
@@ -136,19 +134,23 @@ const EnvironmentPart = ({ modelPath, textureFolder, repeat = 4 }) => {
 };
 
 // --- GRUPPI ---
-// Usiamo la prop "visible" di Three.js. L'oggetto rimane in scena ma non renderizzato. 
-// Nessun unmount, nessun fade, switch istantaneo.
 
-export function GruppoEsterno({ config, viewMode }) {
+export function GruppoEsterno({ config, viewMode, scenario }) {
   const basePath = '/models/nordic/nordic_01/';
   const basePathMuro = '/models/nordic/muro/';
   const texPavimentoExt = '/textures/ambiente/pavimento_ext'; 
   const isHPL = config.category === 'hpl';
-  const show = viewMode === 'external';
+  
+  // MODIFICA 3: In Studio, mostra sempre il lato
+  const show = viewMode === 'external' || scenario === 'studio';
+  const showEnv = scenario !== 'studio';
 
   return (
     <group visible={show}>
-      <EnvironmentPart modelPath={`${basePathMuro}pavimento_esterno.glb`} textureFolder={texPavimentoExt} repeat={6} />
+      <group visible={showEnv}>
+        <EnvironmentPart modelPath={`${basePathMuro}pavimento_esterno.glb`} textureFolder={texPavimentoExt} repeat={6} />
+      </group>
+      
       <MetalPart path={`${basePath}anello_pannello_esterno.glb`} />
       <PlainPart path={`${basePath}core_pannello_esterno.glb`} color={isHPL ? '#24272d' : config.hex} />
       <ConfigurablePart path={`${basePath}overlay_pannello_esterno.glb`} config={config} />
@@ -156,30 +158,39 @@ export function GruppoEsterno({ config, viewMode }) {
   );
 }
 
-export function GruppoInterno({ config, viewMode }) {
+export function GruppoInterno({ config, viewMode, scenario }) {
   const path = '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb';
   const basePathMuro = '/models/nordic/muro/';
   const texPavimentoInt = '/textures/ambiente/pavimento_int';
-  const show = viewMode === 'internal';
+  
+  // MODIFICA 3: In Studio, mostra sempre il lato
+  const show = viewMode === 'internal' || scenario === 'studio';
+  const showEnv = scenario !== 'studio';
 
   return (
     <group visible={show}>
-      <EnvironmentPart modelPath={`${basePathMuro}pavimento_interno.glb`} textureFolder={texPavimentoInt} repeat={6} />
+      <group visible={showEnv}>
+        <EnvironmentPart modelPath={`${basePathMuro}pavimento_interno.glb`} textureFolder={texPavimentoInt} repeat={6} />
+      </group>
       <ConfigurablePart path={path} config={config} />
     </group>
   );
 }
 
-export function GruppoComune() {
+export function GruppoComune({ scenario }) {
   const pathStruttura = '/models/nordic/struttura/struttura.glb';
   const pathTelaio = '/models/nordic/telaio/telaio.glb';
   const pathMuro = '/models/nordic/muro/muro.glb';
   const texMuro = '/textures/ambiente/muro';
   const okumeConfig = { folder: 'altro/legno_okume', isTextured: true, id: 'legno_okume_fixed' };
 
+  const showEnv = scenario !== 'studio';
+
   return (
     <group visible={true}>
-      <EnvironmentPart modelPath={pathMuro} textureFolder={texMuro} repeat={4} />
+      <group visible={showEnv}>
+        <EnvironmentPart modelPath={pathMuro} textureFolder={texMuro} repeat={4} />
+      </group>
       <ConfigurablePart path={pathStruttura} config={okumeConfig} />
       <ConfigurablePart path={pathTelaio} config={okumeConfig} />
     </group>
