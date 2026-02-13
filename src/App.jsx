@@ -1,6 +1,6 @@
-import React, { useState, Suspense, useTransition, useEffect, useRef } from 'react';
+import React, { useState, Suspense, useTransition, useEffect, useRef, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, Html, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Environment, Html, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { TbDoorEnter, TbDoorExit, TbMaximize, TbMinimize, TbPhoto, TbHome, TbBuilding, TbHomeEdit } from "react-icons/tb"; 
 
@@ -13,6 +13,13 @@ import { GruppoEsterno, GruppoInterno, GruppoComune } from './components/3d/Door
 import { TEXTURES_DATA } from './constants/data';
 import './styles/App.css';
 
+// --- CONFIGURAZIONE VISIVA STUDIO ---
+const STUDIO_BG_COLOR = "#ebebeb"; 
+
+// --- OFFSET DI POSIZIONAMENTO SCENOGRAFIA ---
+const SCENE_X_SHIFT = 0.5;  
+const SCENE_Z_SHIFT = 0.1; 
+
 // --- CONTROLLO CAMERA ---
 function CameraController({ viewMode, scenario }) {
   const controlsRef = useRef();
@@ -20,12 +27,24 @@ function CameraController({ viewMode, scenario }) {
   useEffect(() => {
     if (controlsRef.current) {
       const controls = controlsRef.current;
-      const targetPos = viewMode === 'external' 
-        ? new THREE.Vector3(0, 1.2, 5.5) 
-        : new THREE.Vector3(0, 1.2, -5.5);
       
-      controls.object.position.copy(targetPos);
-      controls.object.lookAt(0, 1, 0);
+      const xCam = 4.5; 
+      const yCam = 1.2;
+      const zCam = 6.0;
+
+      const targetX = 0.5;
+      const targetY = 1.3;
+
+      let posVector;
+
+      if (viewMode === 'internal' && scenario !== 'studio') {
+           posVector = new THREE.Vector3(xCam, yCam, -zCam);
+      } else {
+           posVector = new THREE.Vector3(xCam, yCam, zCam);
+      }
+      
+      controls.object.position.copy(posVector);
+      controls.target.set(targetX, targetY, 0); 
       controls.update();
     }
   }, [viewMode, scenario]);
@@ -36,14 +55,15 @@ function CameraController({ viewMode, scenario }) {
       makeDefault 
       enablePan={false} 
       enableZoom={true} 
+      minPolarAngle={0}
+      maxPolarAngle={Math.PI / 2 - 0.05} 
       minDistance={2} 
-      maxDistance={12} 
-      maxPolarAngle={Math.PI / 1.9} 
+      maxDistance={7}
     />
   );
 }
 
-// --- LOADER 2D ---
+// --- LOADER ---
 function Loader() {
   return (
     <Html center>
@@ -52,31 +72,149 @@ function Loader() {
   );
 }
 
-// --- SCENARIO 3: STUDIO PORSCHE STYLE ---
+// --- GENERATORE MAPPE ---
+
+// 1. Alpha Map Pavimento
+function generateFloorAlpha() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  const gradient = ctx.createRadialGradient(256, 256, 100, 256, 256, 256);
+  gradient.addColorStop(0, 'white');
+  gradient.addColorStop(0.4, 'white');
+  gradient.addColorStop(1, 'black'); 
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 512, 512);
+  return new THREE.CanvasTexture(canvas);
+}
+
+// 2. Alpha Map OMBRA FAKE
+function generateShadowAlpha() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+  gradient.addColorStop(0, 'white');   
+  gradient.addColorStop(1, 'black');   
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 512, 512);
+  return new THREE.CanvasTexture(canvas);
+}
+
+// --- LAYER OMBRA FAKE ---
+function FakeShadowLayer() {
+  const alphaMap = useMemo(() => generateShadowAlpha(), []);
+
+  return (
+    <mesh 
+      rotation={[-Math.PI / 2, 0, 0]} 
+      position={[0, 0.0001, 0]} 
+      receiveShadow={false}
+    >
+      <circleGeometry args={[5, 100]} />
+      <meshBasicMaterial 
+        color="#524c4c" 
+        alphaMap={alphaMap}
+        transparent={true} 
+        opacity={0.15} 
+        depthWrite={false} 
+      />
+    </mesh>
+  );
+}
+
+// --- SCENARIO 3: PAVIMENTO ---
+function StudioFloor() {
+  const props = useTexture({
+    map: '/textures/ambiente/studio/color.jpg',
+    normalMap: '/textures/ambiente/studio/normal.png', 
+    roughnessMap: '/textures/ambiente/studio/roughness.jpg',
+    aoMap: '/textures/ambiente/studio/ao.jpg',
+  });
+
+  useMemo(() => {
+    Object.values(props).forEach((t) => {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(3, 3); 
+      t.colorSpace = THREE.SRGBColorSpace;
+    });
+    props.normalMap.colorSpace = THREE.NoColorSpace;
+    props.roughnessMap.colorSpace = THREE.NoColorSpace;
+    props.aoMap.colorSpace = THREE.NoColorSpace;
+  }, [props]);
+
+  const alphaMap = useMemo(() => generateFloorAlpha(), []);
+
+  return (
+    <mesh 
+      rotation={[-Math.PI / 2, 0, 0]} 
+      receiveShadow 
+      renderOrder={-1} 
+      // MODIFICA: Posizionato a -0.001 (appena sotto zero)
+      position={[0, -0.0001, 0]}
+    >
+      <circleGeometry args={[7.5, 64]} />
+      <meshStandardMaterial 
+        {...props}
+        alphaMap={alphaMap}
+        transparent={true}
+        opacity={1}
+        roughness={0.9}
+        metalness={0.1}
+        side={THREE.DoubleSide} 
+        color="#ffffff"
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
+
+// --- SCENARIO 3: LUCI E OMBRE ---
 function StudioScene() {
   return (
-    <>
+    <group>
       <Environment preset="city" background={false} blur={1} />
-      <ambientLight intensity={0.7} />
-      <spotLight 
-        position={[10, 10, 10]} 
-        angle={0.15} 
-        penumbra={1} 
-        intensity={1} 
+      
+      <ambientLight intensity={0.5} />
+      
+      <spotLight position={[5, 4, 5]} intensity={0.5} castShadow={false} />
+      <spotLight position={[-5, 4, 5]} intensity={0.5} castShadow={false} />
+      <spotLight position={[0, 5, -6]} intensity={1.2} angle={0.8} castShadow={false} />
+
+      {/* FIX OMBRA REALE: Parametri ottimizzati per nitidezza e uniformità */}
+      <directionalLight 
+        position={[-6, 8, 4]} 
+        intensity={2.0} 
         castShadow 
-        shadow-bias={-0.0001}
+        // Risoluzione altissima per evitare bordi seghettati
+        shadow-mapSize={[4096, 4096]} 
+        // Bias finissimo per attaccare l'ombra all'oggetto
+        shadow-bias={-0.0001} 
+        // Normal bias ridotto per evitare distorsioni sulla mesh
+        shadow-normalBias={0.02}
+        // Radius basso per un'ombra più definita e realistica (tipo sole)
+        shadow-radius={2} 
+        // Estensione della camera dell'ombra per non tagliare nulla
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
       />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} />
-      <ContactShadows 
-        position={[0, -1.055, 0]} 
-        opacity={0.6} 
-        scale={20} 
-        blur={2} 
-        far={4} 
-        resolution={1024} 
-        color="#000000" 
-      />
-    </>
+
+      {/* Gruppo Scenografia (Pavimento + Fake Shadow) */}
+      {/* Posizionato a 0 in Y, con offset X e Z */}
+      <group position={[SCENE_X_SHIFT, 0, SCENE_Z_SHIFT]}>
+        <StudioFloor />
+        <FakeShadowLayer />
+      </group>
+      
+    </group>
   );
 }
 
@@ -99,7 +237,6 @@ export default function App() {
 
   const [scenario, setScenario] = useState('studio');
   const [isScenarioMenuOpen, setIsScenarioMenuOpen] = useState(false);
-  // NUOVO: Stato separato per cambio scenario (senza blackout)
   const [isScenarioSwitching, setIsScenarioSwitching] = useState(false);
 
   const [isPending, startTransition] = useTransition();
@@ -128,15 +265,11 @@ export default function App() {
     }, 400); 
   };
 
-  // MODIFICA 5: Cambio scenario senza transizione nera, ma bloccando i bottoni
   const handleScenarioChange = (newScenario) => {
     if (newScenario === scenario || isScenarioSwitching) return;
-    
     setIsScenarioSwitching(true);
     setScenario(newScenario);
     setIsScenarioMenuOpen(false);
-
-    // Sblocca i bottoni dello scenario dopo poco (simula un mini-caricamento per feedback logico)
     setTimeout(() => {
         setIsScenarioSwitching(false);
     }, 500); 
@@ -186,7 +319,7 @@ export default function App() {
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
-  const backgroundColor = scenario === 'studio' ? '#ffffff' : '#f4f4f4';
+  const backgroundColor = scenario === 'studio' ? STUDIO_BG_COLOR : '#f4f4f4';
 
   return (
     <div className="main-layout" id="main-scroll-container">
@@ -207,25 +340,24 @@ export default function App() {
                   {isFullscreen ? <TbMinimize size={26} /> : <TbMaximize size={26} />}
                 </button>
 
-                {/* MODIFICA 1: Div sempre renderizzato ma classe CSS "hidden-controls" lo nasconde con animazione */}
                 <div className={`view-controls-vertical ${scenario === 'studio' ? 'hidden-controls' : ''}`}>
-                    <button 
-                        className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
-                        onClick={() => handleViewChange('external')}
-                        title="Vista Esterna"
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <TbDoorEnter size={26} />
-                    </button>
-                    
-                    <button 
-                        className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
-                        onClick={() => handleViewChange('internal')}
-                        title="Vista Interna"
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <TbDoorExit size={26} />
-                    </button>
+                  <button 
+                    className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
+                    onClick={() => handleViewChange('external')}
+                    title="Vista Esterna"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <TbDoorEnter size={26} />
+                  </button>
+                  
+                  <button 
+                    className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
+                    onClick={() => handleViewChange('internal')}
+                    title="Vista Interna"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <TbDoorExit size={26} />
+                  </button>
                 </div>
 
                 <div className="scenario-control-container">
@@ -234,7 +366,6 @@ export default function App() {
                       className={`ui-btn scenario-option ${scenario === 'studio' ? 'active' : ''}`}
                       onClick={() => handleScenarioChange('studio')}
                       title="Studio Neutro"
-                      /* MODIFICA 3: pointerEvents impedisce il click finché è in transizione, nessuna opacità */
                       style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
                     >
                       <TbPhoto size={22} />
@@ -257,10 +388,9 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* MODIFICA 2: Bottone sempre cliccabile per aprire/chiudere il menu */}
                   <button 
                     className={`ui-btn ${isScenarioMenuOpen ? 'active' : ''}`}
-                    onClick={() => setIsScenarioMenuOpen(!isScenarioMenuOpen)}
+                    onClick={() => !isSwitching && setIsScenarioMenuOpen(!isScenarioMenuOpen)}
                     title="Cambia Ambiente"
                   >
                     <TbHomeEdit size={26} />
@@ -271,23 +401,25 @@ export default function App() {
 
             <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 1.5, 5], fov: 40 }}>
               <color attach="background" args={[backgroundColor]} />
-              <fog attach="fog" args={[backgroundColor, 10, 40]} />
+              
+              {scenario === 'studio' && (
+                 <fog attach="fog" args={[backgroundColor, 6, 14]} />
+              )}
               
               <Suspense fallback={<Loader />}>
-                  <group position={[0, -1.05, 0]}>
-                      
-                      {scenario === 'studio' ? (
-                          <StudioScene />
-                      ) : (
+                  {scenario === 'studio' && <StudioScene />}
+
+                  {/* MODIFICA: Gruppo posizionato a 0 (zero) */}
+                  <group position={[0, 0, 0]}>
+                      {scenario !== 'studio' && (
                           <>
                             <ambientLight intensity={0.6} />
-                            {/* MODIFICA 4: Aggiunto bias normalizzato per togliere l'acne (triangoli neri) */}
                             <directionalLight 
                               position={[8, 12, 5]} 
                               intensity={1.5} 
                               castShadow 
                               shadow-mapSize={[2048, 2048]} 
-                              shadow-bias={-0.0005}
+                              shadow-bias={-0.0001}
                               shadow-normalBias={0.04}
                             />
                             <Environment preset="city" blur={0.8} />

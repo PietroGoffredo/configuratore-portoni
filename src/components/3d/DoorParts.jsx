@@ -141,8 +141,10 @@ export function GruppoEsterno({ config, viewMode, scenario }) {
   const texPavimentoExt = '/textures/ambiente/pavimento_ext'; 
   const isHPL = config.category === 'hpl';
   
-  // MODIFICA 3: In Studio, mostra sempre il lato
-  const show = viewMode === 'external' || scenario === 'studio';
+  // MODIFICA: In Studio, mostra SEMPRE il pannello esterno (ignora viewMode)
+  const show = scenario === 'studio' || viewMode === 'external';
+  
+  // MODIFICA: In Studio, NASCONDI l'ambiente
   const showEnv = scenario !== 'studio';
 
   return (
@@ -163,8 +165,10 @@ export function GruppoInterno({ config, viewMode, scenario }) {
   const basePathMuro = '/models/nordic/muro/';
   const texPavimentoInt = '/textures/ambiente/pavimento_int';
   
-  // MODIFICA 3: In Studio, mostra sempre il lato
-  const show = viewMode === 'internal' || scenario === 'studio';
+  // MODIFICA: In Studio, mostra SEMPRE il pannello interno
+  const show = scenario === 'studio' || viewMode === 'internal';
+  
+  // MODIFICA: In Studio, NASCONDI l'ambiente
   const showEnv = scenario !== 'studio';
 
   return (
@@ -184,6 +188,7 @@ export function GruppoComune({ scenario }) {
   const texMuro = '/textures/ambiente/muro';
   const okumeConfig = { folder: 'altro/legno_okume', isTextured: true, id: 'legno_okume_fixed' };
 
+  // MODIFICA: In Studio, NASCONDI il muro
   const showEnv = scenario !== 'studio';
 
   return (
