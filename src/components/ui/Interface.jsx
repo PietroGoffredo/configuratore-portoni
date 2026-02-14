@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { TbInfoCircle, TbX, TbChevronDown } from "react-icons/tb"; 
 import '../../styles/App.css'; 
@@ -19,13 +19,26 @@ const DESCRIPTIONS = {
   }
 };
 
-// --- COMPONENTE SIDE PANEL INFO (PORTAL) ---
+// --- COMPONENTE SIDE PANEL INFO (PORTAL CON TRANSIZIONE FLUIDA) ---
 function InfoPanel({ data, onClose, isClosing }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    if (data && !isClosing) {
+      // Un minuscolo ritardo permette al DOM di renderizzare l'elemento prima di applicare ".active", innescando la transizione CSS
+      const timer = setTimeout(() => setIsMounted(true), 10);
+      return () => clearTimeout(timer);
+    } else if (isClosing) {
+      // Quando inizia la chiusura, togliamo ".active" per innescare la transizione di uscita
+      setIsMounted(false);
+    }
+  }, [data, isClosing]);
+
   if (!data) return null;
 
   return createPortal(
-    <div className={`info-panel-overlay ${isClosing ? 'closing' : 'active'}`} onClick={onClose}>
-      <div className={`info-panel-content ${isClosing ? 'closing' : ''}`} onClick={(e) => e.stopPropagation()}>
+    <div className={`info-panel-overlay ${isMounted ? 'active' : ''}`} onClick={onClose}>
+      <div className={`info-panel-content ${isMounted ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
         
         <div className="info-header">
           <h3 className="info-title">{data.title}</h3>
@@ -108,14 +121,15 @@ function TextureSelector({
           
           const useImage = opt.isTextured || opt.icon;
           const imageUrl = opt.icon 
-             ? `/textures/${opt.folder}/${opt.icon}` 
-             : null; 
+              ? `/textures/${opt.folder}/${opt.icon}` 
+              : null; 
 
           return (
             <div 
               key={opt.id} 
-              // MODIFICA IMPORTANTE: Aggiunto data-label per il tooltip CSS
               data-label={opt.label}
+              tabIndex={0}
+              onMouseLeave={(e) => e.currentTarget.blur()}
               onClick={() => {
                 if (!isSelected && !isLoading) {
                   onSelect(opt);
@@ -124,7 +138,7 @@ function TextureSelector({
               className={`texture-option ${isSelected ? 'selected' : ''}`}
               style={{ 
                  pointerEvents: isLoading ? 'none' : 'auto',
-                 cursor: isSelected ? 'default' : 'pointer',
+                 cursor: 'pointer', 
                  backgroundColor: !useImage ? opt.hex : 'transparent' 
               }} 
             >
@@ -163,6 +177,7 @@ export default function Interface({
 
   const handleCloseInfo = () => {
     setIsClosing(true);
+    // Attende esattamente 400ms (il tempo della transizione CSS) prima di distruggere il componente
     setTimeout(() => {
       setActiveInfo(null);
       setIsClosing(false);

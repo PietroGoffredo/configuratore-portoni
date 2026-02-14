@@ -70,7 +70,7 @@ select {
   display: flex;
   width: 100%;
   margin: 0 auto;
-  padding: 40px;
+  padding: 30px 40px;
   position: relative;
   align-items: flex-start;
   gap: 40px;
@@ -81,12 +81,12 @@ select {
   flex: 1;
   position: -webkit-sticky;
   position: sticky;
-  top: 0;
-  min-height: 600px;
+  top: 30px; 
+  height: calc(100vh - 60px); 
+  min-height: 650px;
   max-width: 65%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column; 
   padding: 0;
   box-sizing: border-box;
 }
@@ -94,29 +94,111 @@ select {
 .right-scroll-column {
   width: calc(35% - 40px);
   flex: 0 0 calc(35% - 40px);
-  padding-top: 30px;
+  padding-top: 0;
   min-width: 300px;
   box-sizing: border-box;
   background: var(--col-white-1);
   z-index: 15;
 }
 
-/* --- CANVAS FRAME --- */
+/* --- CANVAS FRAME & INNER WRAPPER --- */
 .canvas-frame {
   width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  overflow: hidden;
+  flex: 1; 
+  min-height: 0; 
   position: relative;
-  margin-top: 30px;
-  background: #f4f4f4;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  margin-top: 0;
   z-index: 10;
   cursor: grab;
 }
 
 .canvas-frame:active {
   cursor: grabbing;
+}
+
+.canvas-inner-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f4f4f4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  z-index: 1;
+}
+
+/* --- OVERLAY FOTOGRAFICO PER CROSSFADE SCENARI --- */
+.scenario-transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 12; 
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.scenario-transition-overlay.faded {
+  opacity: 0;
+}
+
+/* --- CAMERA PRESETS (Sotto al Canvas) --- */
+.camera-presets-wrapper {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-start; 
+  gap: 15px;
+  
+  /* FIX TRONCAMENTO: Aggiunto spazio ai bordi per far "respirare" l'ombra e un margine negativo per allinearlo. */
+  padding: 15px 4px 4px 4px; 
+  margin-left: -4px; 
+  width: calc(100% + 8px);
+  
+  overflow-x: auto; 
+  scrollbar-width: none; 
+}
+.camera-presets-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.preset-box {
+  width: 85px;  
+  height: 60px; 
+  border-radius: 6px;
+  background-color: var(--col-white-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid var(--col-white-3);
+  overflow: visible; 
+  flex-shrink: 0; 
+}
+
+.preset-box .preset-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--col-black-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preset-box:hover {
+  border-color: var(--col-white-1);
+  box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold);
+  transform: none;
+  z-index: 10;
+}
+
+.preset-box.selected {
+  border-color: var(--col-white-1);
+  box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold);
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 /* BLACKOUT OVERLAY */
@@ -130,7 +212,7 @@ select {
   z-index: 15;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.4s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
 }
 
 .blackout-overlay.active {
@@ -144,20 +226,22 @@ select {
   height: 100vh;
   margin: 0;
   padding: 0;
-  border-radius: 0;
-  background: #f4f4f4;
   display: flex;
+}
+.canvas-frame:fullscreen .canvas-inner-wrapper {
+  border-radius: 0;
 }
 
 .canvas-frame:-webkit-full-screen {
   width: 100%;
   height: 100%;
-  border-radius: 0;
   margin: 0;
-  background: #f4f4f4;
+}
+.canvas-frame:-webkit-full-screen .canvas-inner-wrapper {
+  border-radius: 0;
 }
 
-.canvas-frame canvas {
+.canvas-inner-wrapper canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;
@@ -172,7 +256,7 @@ select {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 20;
+  z-index: 20; 
 }
 
 .ui-btn {
@@ -186,20 +270,79 @@ select {
   border: 2px solid transparent;
   box-shadow: none;
   transition: background-color 0.3s ease, border-color 0.2s ease, color 0.2s ease;
-  width: 52px;
-  height: 52px;
+  width: 55px;  
+  height: 55px; 
   border-radius: 6px;
+  position: relative;
+  overflow: visible; 
 }
 
 .ui-btn:hover {
   background-color: var(--col-white-3);
 }
 
+.ui-btn.active {
+  border-color: var(--col-gold);
+  color: var(--col-gold);
+}
+
+.ui-btn:disabled {
+  cursor: default; 
+}
+
+/* --- ETICHETTE TOOLTIP PER BOTTONI UI --- */
+.ui-btn::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 95%; 
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--col-white-1);
+  color: var(--col-black-2);
+  padding: 7px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--col-white-2);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, top 0.2s ease, visibility 0.2s ease;
+}
+
+.ui-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  top: 105%; 
+  transition: opacity 0.2s ease 0.8s, top 0.2s ease 0.8s, visibility 0.2s ease 0.8s;
+}
+
+.ui-btn:active::after,
+.ui-btn:focus::after {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: none !important;
+}
+
 .btn-fullscreen {
   position: absolute;
   top: 15px;
   right: 15px;
-  font-size: 1.2rem;
+}
+
+.btn-fullscreen::after {
+  bottom: auto;
+  top: 95%;
+  transition: opacity 0.2s ease, top 0.2s ease, visibility 0.2s ease;
+}
+
+.btn-fullscreen:hover::after {
+  bottom: auto;
+  top: 110%;
+  transition: opacity 0.2s ease 0.8s, top 0.2s ease 0.8s, visibility 0.2s ease 0.8s;
 }
 
 .view-controls-vertical {
@@ -210,13 +353,11 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* MODIFICA 1: Transizione morbida di apparizione/scomparsa */
   opacity: 1;
   visibility: visible;
   transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
-/* Nasconde i controlli quando siamo in studio */
 .view-controls-vertical.hidden-controls {
   opacity: 0;
   visibility: hidden;
@@ -233,48 +374,72 @@ select {
   background-color: var(--col-white-3);
 }
 
-/* --- SCENARIO CONTROLS (BOTTOM LEFT) --- */
-.scenario-control-container {
+/* --- CONTROLLI SCENARIO & FOTO --- */
+.bottom-left-controls {
   position: absolute;
   bottom: 15px;
-  left: 15px;
+  left: 15px; 
+  right: auto;
   display: flex;
-  flex-direction: column; /* Impila il menu sopra il bottone */
-  align-items: flex-start; /* Allinea a sinistra */
-  gap: 10px;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px; 
   z-index: 25;
+  pointer-events: none; 
 }
 
-/* MENÙ A COMPARSA ORIZZONTALE */
-.scenario-popup-menu {
+.bottom-left-controls > * {
+  pointer-events: auto; 
+}
+
+.scenario-control-container {
+  position: relative; 
   display: flex;
-  flex-direction: row; /* Dispone le icone in orizzontale */
-  gap: 8px;
+  flex-direction: column; 
+  align-items: flex-start; 
+}
+
+/* MENÙ A COMPARSA SCENARI */
+.scenario-popup-menu {
+  position: absolute;
+  bottom: 100%; 
+  left: 0;      
+  margin-bottom: 10px; 
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   background-color: var(--col-white-1);
   padding: 8px;
   border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-  pointer-events: auto;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  z-index: 100; 
   
-  /* Stato Iniziale (Nascosto) */
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
   transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), visibility 0.3s ease;
 }
 
-/* Stato Aperto */
 .scenario-popup-menu.open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
 
-/* Stile per l'opzione attiva nel menu scenari */
+.scenario-options-wrapper {
+  display: flex;
+  flex-direction: row; 
+  gap: 8px;
+}
+
 .scenario-option.active {
   border-color: var(--col-gold);
   color: var(--col-gold);
   background-color: var(--col-white-2);
+}
+
+.scenario-option.active:hover {
+  background-color: var(--col-white-3);
 }
 
 /* --- SIDEBAR COMPONENTS --- */
@@ -429,25 +594,28 @@ select {
   margin-top: -5px;
 }
 
+/* --- TEXTURE OPTION --- */
 .texture-option {
   aspect-ratio: 1;
   border-radius: 6px;
   position: relative;
   cursor: pointer;
-  border: 1px solid var(--col-white-4);
+  border: 1px solid var(--col-white-3);
   overflow: visible; 
-  transition: border-color 0.2s;
 }
 
 .texture-option:hover {
-  border: 2px solid var(--col-gold);
+  border-color: var(--col-white-1);
+  box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold);
   transform: none;
   z-index: 10;
 }
 
 .texture-option.selected {
-  border: 2px solid var(--col-gold);
-  box-shadow: none;
+  border-color: var(--col-white-1);
+  box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold);
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 .texture-option::after {
@@ -462,7 +630,7 @@ select {
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--col-white-2);
   border-radius: 4px;
   pointer-events: none;
@@ -472,12 +640,18 @@ select {
   transition: opacity 0.2s ease, top 0.2s ease, visibility 0.2s ease;
 }
 
-/* STATO HOVER: Attiva il tooltip */
 .texture-option:hover::after {
   opacity: 1;
   visibility: visible;
   top: 105%; 
   transition: opacity 0.2s ease 0.6s, top 0.2s ease 0.6s, visibility 0.2s ease 0.6s;
+}
+
+.texture-option:active::after,
+.texture-option:focus::after {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: none !important;
 }
 
 .texture-option img {
@@ -488,7 +662,7 @@ select {
   display: block;
 }
 
-/* --- INFO SIDE PANEL --- */
+/* --- INFO SIDE PANEL CON TRANSIZIONE FLUIDA --- */
 .info-panel-overlay {
   position: fixed;
   top: 0;
@@ -496,21 +670,19 @@ select {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
   z-index: 9999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.4s ease, visibility 0.4s ease;
+  transition: opacity 0.4s ease, visibility 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease;
 }
 
 .info-panel-overlay.active {
   opacity: 1;
   visibility: visible;
-}
-
-.info-panel-overlay.closing {
-  opacity: 0;
-  visibility: hidden;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .info-panel-content {
@@ -526,30 +698,14 @@ select {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  /* Posizione di partenza (fuori dallo schermo) */
   transform: translateX(100%);
-  animation: slideInPanel 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.info-panel-content.closing {
-  animation: slideOutPanel 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-@keyframes slideInPanel {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideOutPanel {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
+/* Quando riceve la classe active, entra nello schermo */
+.info-panel-content.active {
+  transform: translateX(0);
 }
 
 .info-header {
@@ -600,7 +756,7 @@ select {
   margin: 0;
 }
 
-/* --- LOADERS --- */
+/* --- LOADERS E SPINNER --- */
 .spinner-canvas {
   width: 40px;
   height: 40px;
@@ -619,24 +775,32 @@ select {
   animation: spin 0.8s linear infinite;
 }
 
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+}
+
 .loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.7); 
   z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 5px; 
+  border-radius: inherit;
+}
+
+.ui-btn .loading-overlay {
+  background: transparent;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* --- RIEPILOGO & FOOTER --- */
@@ -745,7 +909,8 @@ select {
     width: 100%;
     max-width: 100%;
     flex: auto;
-    height: 60vh;
+    height: 70vh;
+    min-height: 550px;
     margin-bottom: 20px;
     padding: 0;
   }
@@ -796,52 +961,17 @@ select {
     max-width: 100%;
   }
 
-  /* --- SCENARIO CONTROLS (BOTTOM LEFT) --- */
-.scenario-control-container {
-  position: absolute;
-  bottom: 15px;
-  left: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Centra il menu rispetto al bottone */
-  gap: 10px;
-  z-index: 25;
-  pointer-events: none; /* Il contenitore non blocca i click, i figli sì */
-}
+  .bottom-left-controls {
+    bottom: 15px;
+    left: 15px;
+    right: auto;
+  }
 
-/* Riabilita il click su bottoni e menu */
-.scenario-control-container > * {
-  pointer-events: auto;
-}
+  .scenario-control-container {
+    align-items: flex-start;
+  }
 
-/* MENÙ A COMPARSA */
-.scenario-popup-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background-color: var(--col-white-1);
-  padding: 8px;
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-  
-  /* Stato Iniziale (Nascosto) */
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(10px);
-  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), visibility 0.3s ease;
-}
-
-/* Stato Aperto */
-.scenario-popup-menu.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-  /* Opzione Scenario Attiva */
-  .scenario-option.active {
-    border-color: var(--col-gold);
-    color: var(--col-gold);
-    background-color: var(--col-white-2);
+  .scenario-options-wrapper {
+    flex-direction: column; 
   }
 }

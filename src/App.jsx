@@ -1,8 +1,8 @@
 import React, { useState, Suspense, useTransition, useEffect, useRef, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, Html, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-import { TbDoorEnter, TbDoorExit, TbMaximize, TbMinimize, TbPhoto, TbHome, TbBuilding, TbHomeEdit } from "react-icons/tb"; 
+import { TbDoorEnter, TbDoorExit, TbArrowsMaximize, TbArrowsMinimize, TbPhoto, TbHome, TbBuilding, TbHomeEdit, TbCamera } from "react-icons/tb"; 
 
 import Navbar from './components/ui/Navbar';
 import Footer from './components/ui/Footer';
@@ -14,40 +14,124 @@ import { TEXTURES_DATA } from './constants/data';
 import './styles/App.css';
 
 // --- CONFIGURAZIONE VISIVA STUDIO ---
-const STUDIO_BG_COLOR = "#ebebeb"; 
+const STUDIO_BG_COLOR = "#eeeeee"; 
 
 // --- OFFSET DI POSIZIONAMENTO SCENOGRAFIA ---
 const SCENE_X_SHIFT = 0.5;  
 const SCENE_Z_SHIFT = 0.1; 
 
-// --- CONTROLLO CAMERA ---
-function CameraController({ viewMode, scenario }) {
-  const controlsRef = useRef();
-  
+// --- PRESET ANGOLAZIONI ---
+const CAMERA_PRESETS = [
+  { id: 'ext_1', type: 'external', position: [0.5, 1.60, 6.5], target: [0.5, 1.25, 0], label: 'Fronte' },
+  { id: 'ext_2', type: 'external', position: [4.8, 1.60, 4.8], target: [0.5, 1.25, 0], label: 'Lato Dx' },
+  { id: 'ext_3', type: 'external', position: [-3.8, 1.60, 4.8], target: [0.5, 1.25, 0], label: 'Lato Sx' },
+  { id: 'ext_4', type: 'external', position: [2.2, 1.30, 2.8], target: [0.5, 1.10, 0], label: 'Dett. Fr' },
+  { id: 'int_1', type: 'internal', position: [0.5, 1.60, -6.5], target: [0.5, 1.25, 0], label: 'Retro' },
+  { id: 'int_2', type: 'internal', position: [-3.8, 1.60, -4.8], target: [0.5, 1.25, 0], label: 'Retro Dx' },
+  { id: 'int_3', type: 'internal', position: [4.8, 1.60, -4.8], target: [0.5, 1.25, 0], label: 'Retro Sx' },
+  { id: 'int_4', type: 'internal', position: [2.0, 1.30, -2.8], target: [0.5, 1.10, 0], label: 'Dett. Re' }
+];
+
+// --- HELPER PER SCREENSHOT WEBGL ALTA QUALITÀ ---
+function WebGLContextHelper({ contextRef }) {
+  const { gl, scene, camera } = useThree();
   useEffect(() => {
-    if (controlsRef.current) {
-      const controls = controlsRef.current;
-      
-      const xCam = 4.5; 
-      const yCam = 1.2;
-      const zCam = 6.0;
+    contextRef.current = { gl, scene, camera };
+  }, [gl, scene, camera, contextRef]);
+  return null;
+}
 
-      const targetX = 0.5;
-      const targetY = 1.3;
+// --- CONTROLLO CAMERA ANIMATO ---
+function CameraController({ activeAngle, isBlackout }) {
+  const controlsRef = useRef();
+  const { camera } = useThree();
+  
+  const startPos = useRef(new THREE.Vector3());
+  const startTarget = useRef(new THREE.Vector3());
+  const endPos = useRef(new THREE.Vector3());
+  const endTarget = useRef(new THREE.Vector3());
+  
+  const isAnimating = useRef(false);
+  const startTime = useRef(0);
+  const isFirstRender = useRef(true); 
+  const ANIMATION_DURATION = 1.5; 
+  
+  const easeInOutCubic = (t) => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
 
-      let posVector;
-
-      if (viewMode === 'internal' && scenario !== 'studio') {
-           posVector = new THREE.Vector3(xCam, yCam, -zCam);
-      } else {
-           posVector = new THREE.Vector3(xCam, yCam, zCam);
+  useEffect(() => {
+    if (activeAngle && controlsRef.current) {
+      if (isFirstRender.current) {
+        camera.position.set(...activeAngle.position);
+        controlsRef.current.target.set(...activeAngle.target);
+        controlsRef.current.update();
+        isFirstRender.current = false;
+      } 
+      else if (isBlackout) {
+        camera.position.set(...activeAngle.position);
+        controlsRef.current.target.set(...activeAngle.target);
+        controlsRef.current.update();
+        isAnimating.current = false;
+      } 
+      else {
+        startPos.current.copy(camera.position);
+        startTarget.current.copy(controlsRef.current.target);
+        endPos.current.set(...activeAngle.position);
+        endTarget.current.set(...activeAngle.target);
+        
+        startTime.current = 0;
+        isAnimating.current = true;
       }
-      
-      controls.object.position.copy(posVector);
-      controls.target.set(targetX, targetY, 0); 
-      controls.update();
     }
-  }, [viewMode, scenario]);
+  }, [activeAngle, camera]); 
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    const onStartDrag = () => { isAnimating.current = false; };
+    if (controls) controls.addEventListener('start', onStartDrag);
+    return () => { if (controls) controls.removeEventListener('start', onStartDrag); };
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (isAnimating.current && controlsRef.current) {
+      if (startTime.current === 0) startTime.current = clock.getElapsedTime();
+      
+      const elapsed = clock.getElapsedTime() - startTime.current;
+      let progress = elapsed / ANIMATION_DURATION;
+
+      if (progress >= 1.0) {
+        progress = 1.0;
+        isAnimating.current = false;
+      }
+
+      const easeProgress = easeInOutCubic(progress);
+
+      const currentTarget = new THREE.Vector3().lerpVectors(startTarget.current, endTarget.current, easeProgress);
+      controlsRef.current.target.copy(currentTarget);
+
+      const startOffset = startPos.current.clone().sub(startTarget.current);
+      const endOffset = endPos.current.clone().sub(endTarget.current);
+
+      const startSpherical = new THREE.Spherical().setFromVector3(startOffset);
+      const endSpherical = new THREE.Spherical().setFromVector3(endOffset);
+
+      let thetaDiff = endSpherical.theta - startSpherical.theta;
+      while (thetaDiff > Math.PI) thetaDiff -= 2 * Math.PI;
+      while (thetaDiff < -Math.PI) thetaDiff += 2 * Math.PI;
+      
+      const currentTheta = startSpherical.theta + thetaDiff * easeProgress;
+      const currentPhi = startSpherical.phi + (endSpherical.phi - startSpherical.phi) * easeProgress;
+      const currentRadius = startSpherical.radius + (endSpherical.radius - startSpherical.radius) * easeProgress;
+
+      const currentSpherical = new THREE.Spherical(currentRadius, currentPhi, currentTheta);
+      const currentOffset = new THREE.Vector3().setFromSpherical(currentSpherical);
+      
+      camera.position.copy(currentTarget).add(currentOffset);
+      
+      controlsRef.current.update();
+    }
+  });
   
   return (
     <OrbitControls 
@@ -73,8 +157,6 @@ function Loader() {
 }
 
 // --- GENERATORE MAPPE ---
-
-// 1. Alpha Map Pavimento
 function generateFloorAlpha() {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
@@ -91,7 +173,6 @@ function generateFloorAlpha() {
   return new THREE.CanvasTexture(canvas);
 }
 
-// 2. Alpha Map OMBRA FAKE
 function generateShadowAlpha() {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
@@ -119,10 +200,10 @@ function FakeShadowLayer() {
     >
       <circleGeometry args={[5, 100]} />
       <meshBasicMaterial 
-        color="#524c4c" 
+        color="#351616" 
         alphaMap={alphaMap}
         transparent={true} 
-        opacity={0.15} 
+        opacity={0.2} 
         depthWrite={false} 
       />
     </mesh>
@@ -156,7 +237,6 @@ function StudioFloor() {
       rotation={[-Math.PI / 2, 0, 0]} 
       receiveShadow 
       renderOrder={-1} 
-      // MODIFICA: Posizionato a -0.001 (appena sotto zero)
       position={[0, -0.0001, 0]}
     >
       <circleGeometry args={[7.5, 64]} />
@@ -175,40 +255,31 @@ function StudioFloor() {
   );
 }
 
-// --- SCENARIO 3: LUCI E OMBRE ---
+// --- SCENARIO 3: LUCI E OMBRE DEFINITIVE ---
 function StudioScene() {
   return (
     <group>
-      <Environment preset="city" background={false} blur={1} />
+      <Environment preset="city" background={false} blur={0.8} environmentIntensity={0.5} />
       
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={1.3} />
       
-      <spotLight position={[5, 4, 5]} intensity={0.5} castShadow={false} />
-      <spotLight position={[-5, 4, 5]} intensity={0.5} castShadow={false} />
-      <spotLight position={[0, 5, -6]} intensity={1.2} angle={0.8} castShadow={false} />
+      <spotLight position={[-1.5, 2, 2]} intensity={2} penumbra={1} castShadow={false} />
+      <spotLight position={[3.5, 1.5, -2]} intensity={1} penumbra={1} castShadow={false} />
+      <spotLight position={[0, 2.5, -3]} intensity={1.5} angle={0.8} castShadow={false} />
 
-      {/* FIX OMBRA REALE: Parametri ottimizzati per nitidezza e uniformità */}
       <directionalLight 
-        position={[-6, 8, 4]} 
-        intensity={2.0} 
+        position={[-3, 12, 5]} 
+        intensity={1.5} 
         castShadow 
-        // Risoluzione altissima per evitare bordi seghettati
-        shadow-mapSize={[4096, 4096]} 
-        // Bias finissimo per attaccare l'ombra all'oggetto
+        shadow-mapSize={[2048, 2048]} 
         shadow-bias={-0.0001} 
-        // Normal bias ridotto per evitare distorsioni sulla mesh
-        shadow-normalBias={0.02}
-        // Radius basso per un'ombra più definita e realistica (tipo sole)
-        shadow-radius={2} 
-        // Estensione della camera dell'ombra per non tagliare nulla
+        shadow-radius={3} 
         shadow-camera-left={-10}
         shadow-camera-right={10}
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
 
-      {/* Gruppo Scenografia (Pavimento + Fake Shadow) */}
-      {/* Posizionato a 0 in Y, con offset X e Z */}
       <group position={[SCENE_X_SHIFT, 0, SCENE_Z_SHIFT]}>
         <StudioFloor />
         <FakeShadowLayer />
@@ -235,12 +306,38 @@ export default function App() {
   const [isBlackout, setIsBlackout] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
+  // NUOVI STATI PER LA DISSOLVENZA SCENARI (CROSSFADE FOTOGRAFICO)
+  const [transitionImage, setTransitionImage] = useState(null);
+  const [isTransitionFading, setIsTransitionFading] = useState(false);
+
   const [scenario, setScenario] = useState('studio');
   const [isScenarioMenuOpen, setIsScenarioMenuOpen] = useState(false);
   const [isScenarioSwitching, setIsScenarioSwitching] = useState(false);
 
+  const [activeAngle, setActiveAngle] = useState(CAMERA_PRESETS[0]);
+
+  const scenarioMenuRef = useRef(null);
   const [isPending, startTransition] = useTransition();
   const [loadingState, setLoadingState] = useState({ category: null, id: null });
+
+  const webglContextRef = useRef(null);
+  const [isTakingPhoto, setIsTakingPhoto] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (scenarioMenuRef.current && !scenarioMenuRef.current.contains(event.target)) {
+        setIsScenarioMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -250,29 +347,93 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  const handleViewChange = (mode) => {
-    if (mode === viewMode || isSwitching) return;
-    setIsSwitching(true);
-    setIsBlackout(true); 
-    setTimeout(() => {
-      setViewMode(mode); 
+  const handleAngleSelect = (angle) => {
+    if (isSwitching || isScenarioSwitching || isTakingPhoto) return;
+    if (activeAngle.id === angle.id) return;
+
+    const isVilla = scenario !== 'studio';
+    const needsViewSwitch = isVilla && angle.type !== viewMode;
+
+    if (needsViewSwitch) {
+      setIsSwitching(true);
+      setIsBlackout(true);
+      
       setTimeout(() => {
-        setIsBlackout(false); 
+        setViewMode(angle.type);
+        setActiveAngle(angle); 
+        
         setTimeout(() => {
-            setIsSwitching(false);
-        }, 400); 
-      }, 100); 
-    }, 400); 
+          setIsBlackout(false);
+          setTimeout(() => {
+              setIsSwitching(false);
+          }, 500); 
+        }, 100);
+      }, 500); 
+    } else {
+      if (angle.type !== viewMode) {
+         setViewMode(angle.type);
+      }
+      setActiveAngle(angle);
+    }
   };
 
-  const handleScenarioChange = (newScenario) => {
-    if (newScenario === scenario || isScenarioSwitching) return;
+  const handleViewChange = (mode) => {
+    if (mode === viewMode || isSwitching) return;
+    
+    const isVilla = scenario !== 'studio';
+    const defaultAngle = CAMERA_PRESETS.find(a => a.type === mode);
+
+    if (isVilla) {
+      setIsSwitching(true);
+      setIsBlackout(true); 
+      setTimeout(() => {
+        setViewMode(mode); 
+        if(defaultAngle) setActiveAngle(defaultAngle);
+
+        setTimeout(() => {
+          setIsBlackout(false); 
+          setTimeout(() => {
+              setIsSwitching(false);
+          }, 500); 
+        }, 100); 
+      }, 500); 
+    } else {
+      setViewMode(mode);
+      if(defaultAngle) setActiveAngle(defaultAngle);
+    }
+  };
+
+  // LOGICA CROSSFADE SCENARIO: Dissolvenza diretta tra i due ambienti
+  const handleScenarioChange = async (newScenario) => {
+    if (newScenario === scenario || isScenarioSwitching || isSwitching || isTakingPhoto) return;
+    
     setIsScenarioSwitching(true);
+    
+    // 1. Scatta un'immagine ad alta fedeltà della vista attuale prima di smontarla
+    if (webglContextRef.current) {
+      const { gl, scene, camera } = webglContextRef.current;
+      gl.render(scene, camera); 
+      const dataURL = gl.domElement.toDataURL('image/jpeg', 1.0);
+      setTransitionImage(dataURL);
+    }
+    
+    // 2. Attende che React dipinga l'immagine sullo schermo
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // 3. Cambia scenario 3D sotto all'immagine (invisibile all'utente)
     setScenario(newScenario);
-    setIsScenarioMenuOpen(false);
+    setIsScenarioMenuOpen(false); 
+    
+    // 4. Inizia a sfumare l'immagine scattata lasciando emergere il nuovo scenario
     setTimeout(() => {
-        setIsScenarioSwitching(false);
-    }, 500); 
+      setIsTransitionFading(true); 
+      
+      setTimeout(() => {
+          setTransitionImage(null);
+          setIsTransitionFading(false);
+          setIsScenarioSwitching(false); 
+      }, 500); 
+    }, 150); 
   };
 
   const toggleFullscreen = async () => {
@@ -285,6 +446,32 @@ export default function App() {
     } catch (err) {
       console.error("Errore Fullscreen:", err);
     }
+  };
+
+  const handleTakePhoto = async () => {
+    if (isTakingPhoto || !webglContextRef.current) return;
+    setIsTakingPhoto(true);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const { gl, scene, camera } = webglContextRef.current;
+    
+    const originalDpr = gl.getPixelRatio();
+    gl.setPixelRatio(3); 
+    gl.render(scene, camera); 
+    
+    const dataURL = gl.domElement.toDataURL('image/jpeg', 1.0);
+    gl.setPixelRatio(originalDpr);
+    gl.render(scene, camera);
+
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'Nordic 01.jpg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setIsTakingPhoto(false);
   };
 
   const preloadImage = (url) => {
@@ -327,25 +514,76 @@ export default function App() {
 
       <div className="configurator-section">
         <div className="left-sticky-column">
+          
           <div className="canvas-frame" ref={canvasContainerRef}>
             
-            <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
+            <div className="canvas-inner-wrapper">
+              <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
+
+              {/* OVERLAY IMMAGINE PER CROSSFADE TRANSIZIONE SCENARIO */}
+              {transitionImage && (
+                <img 
+                  src={transitionImage} 
+                  alt="transition" 
+                  className={`scenario-transition-overlay ${isTransitionFading ? 'faded' : ''}`} 
+                />
+              )}
+
+              <Canvas shadows dpr={[1, 2]} camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} gl={{ preserveDrawingBuffer: true }}>
+                <WebGLContextHelper contextRef={webglContextRef} />
+                
+                <color attach="background" args={[backgroundColor]} />
+                
+                {scenario === 'studio' && (
+                   <fog attach="fog" args={[backgroundColor, 8, 20]} />
+                )}
+                
+                <Suspense fallback={<Loader />}>
+                    {scenario === 'studio' && <StudioScene />}
+
+                    <group position={[0, 0, 0]}>
+                        {scenario !== 'studio' && (
+                            <>
+                              <ambientLight intensity={0.6} />
+                              <directionalLight 
+                                position={[8, 12, 5]} 
+                                intensity={1.5} 
+                                castShadow 
+                                shadow-mapSize={[2048, 2048]} 
+                                shadow-bias={-0.0001}
+                              />
+                              <Environment preset="city" blur={0.8} />
+                            </>
+                        )}
+
+                        <group>
+                          <GruppoComune scenario={scenario} />
+                          <GruppoInterno config={intFinish} viewMode={viewMode} scenario={scenario} />
+                          <GruppoEsterno config={extFinish} viewMode={viewMode} scenario={scenario} />
+                        </group>
+                    </group>
+                </Suspense>
+                <CameraController activeAngle={activeAngle} isBlackout={isBlackout} />
+              </Canvas>
+            </div>
 
             <div className="canvas-ui-overlay">
+                
                 <button 
                   className="ui-btn btn-fullscreen" 
                   onClick={toggleFullscreen}
-                  title={isFullscreen ? "Chiudi" : "Schermo Intero"}
+                  onMouseLeave={(e) => e.currentTarget.blur()}
+                  data-label={isFullscreen ? "Chiudi" : "Schermo Intero"}
                 >
-                  {isFullscreen ? <TbMinimize size={26} /> : <TbMaximize size={26} />}
+                  {isFullscreen ? <TbArrowsMinimize size={26} /> : <TbArrowsMaximize size={26} />}
                 </button>
 
                 <div className={`view-controls-vertical ${scenario === 'studio' ? 'hidden-controls' : ''}`}>
                   <button 
                     className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
                     onClick={() => handleViewChange('external')}
-                    title="Vista Esterna"
-                    style={{ cursor: 'pointer' }}
+                    onMouseLeave={(e) => e.currentTarget.blur()}
+                    data-label="Vista Esterna"
                   >
                     <TbDoorEnter size={26} />
                   </button>
@@ -353,89 +591,85 @@ export default function App() {
                   <button 
                     className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
                     onClick={() => handleViewChange('internal')}
-                    title="Vista Interna"
-                    style={{ cursor: 'pointer' }}
+                    onMouseLeave={(e) => e.currentTarget.blur()}
+                    data-label="Vista Interna"
                   >
                     <TbDoorExit size={26} />
                   </button>
                 </div>
 
-                <div className="scenario-control-container">
-                  <div className={`scenario-popup-menu ${isScenarioMenuOpen ? 'open' : ''}`}>
+                <div className="bottom-left-controls">
+                  
+                  <div className="scenario-control-container" ref={scenarioMenuRef}>
+                    <div className={`scenario-popup-menu ${isScenarioMenuOpen ? 'open' : ''}`}>
+                      <div className="scenario-options-wrapper">
+                        <button 
+                          className={`ui-btn scenario-option ${scenario === 'modern' ? 'active' : ''}`}
+                          onClick={() => handleScenarioChange('modern')}
+                          onMouseLeave={(e) => e.currentTarget.blur()}
+                          data-label="Villa Moderna"
+                          style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                        >
+                          <TbBuilding size={22} />
+                        </button>
+                        <button 
+                          className={`ui-btn scenario-option ${scenario === 'classic' ? 'active' : ''}`}
+                          onClick={() => handleScenarioChange('classic')}
+                          onMouseLeave={(e) => e.currentTarget.blur()}
+                          data-label="Villa Classica"
+                          style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                        >
+                          <TbHome size={22} />
+                        </button>
+                        <button 
+                          className={`ui-btn scenario-option ${scenario === 'studio' ? 'active' : ''}`}
+                          onClick={() => handleScenarioChange('studio')}
+                          onMouseLeave={(e) => e.currentTarget.blur()}
+                          data-label="Studio Neutro"
+                          style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                        >
+                          <TbPhoto size={22} />
+                        </button>
+                      </div>
+                    </div>
+
                     <button 
-                      className={`ui-btn scenario-option ${scenario === 'studio' ? 'active' : ''}`}
-                      onClick={() => handleScenarioChange('studio')}
-                      title="Studio Neutro"
-                      style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
+                      className={`ui-btn ${isScenarioMenuOpen ? 'active' : ''}`}
+                      onClick={() => !isSwitching && setIsScenarioMenuOpen(!isScenarioMenuOpen)}
+                      onMouseLeave={(e) => e.currentTarget.blur()}
+                      data-label="Cambia Ambiente"
                     >
-                      <TbPhoto size={22} />
-                    </button>
-                    <button 
-                      className={`ui-btn scenario-option ${scenario === 'modern' ? 'active' : ''}`}
-                      onClick={() => handleScenarioChange('modern')}
-                      title="Villa Moderna"
-                      style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
-                    >
-                      <TbBuilding size={22} />
-                    </button>
-                    <button 
-                      className={`ui-btn scenario-option ${scenario === 'classic' ? 'active' : ''}`}
-                      onClick={() => handleScenarioChange('classic')}
-                      title="Villa Classica"
-                      style={{ pointerEvents: isScenarioSwitching ? 'none' : 'auto' }}
-                    >
-                      <TbHome size={22} />
+                      <TbHomeEdit size={26} />
                     </button>
                   </div>
 
                   <button 
-                    className={`ui-btn ${isScenarioMenuOpen ? 'active' : ''}`}
-                    onClick={() => !isSwitching && setIsScenarioMenuOpen(!isScenarioMenuOpen)}
-                    title="Cambia Ambiente"
+                    className="ui-btn"
+                    onClick={handleTakePhoto}
+                    onMouseLeave={(e) => e.currentTarget.blur()}
+                    data-label="Scatta Foto"
+                    disabled={isTakingPhoto}
                   >
-                    <TbHomeEdit size={26} />
+                    {isTakingPhoto ? <div className="spinner spinner-sm"></div> : <TbCamera size={26} />}
                   </button>
+
                 </div>
-
             </div>
-
-            <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 1.5, 5], fov: 40 }}>
-              <color attach="background" args={[backgroundColor]} />
-              
-              {scenario === 'studio' && (
-                 <fog attach="fog" args={[backgroundColor, 6, 14]} />
-              )}
-              
-              <Suspense fallback={<Loader />}>
-                  {scenario === 'studio' && <StudioScene />}
-
-                  {/* MODIFICA: Gruppo posizionato a 0 (zero) */}
-                  <group position={[0, 0, 0]}>
-                      {scenario !== 'studio' && (
-                          <>
-                            <ambientLight intensity={0.6} />
-                            <directionalLight 
-                              position={[8, 12, 5]} 
-                              intensity={1.5} 
-                              castShadow 
-                              shadow-mapSize={[2048, 2048]} 
-                              shadow-bias={-0.0001}
-                              shadow-normalBias={0.04}
-                            />
-                            <Environment preset="city" blur={0.8} />
-                          </>
-                      )}
-
-                      <group>
-                        <GruppoComune scenario={scenario} />
-                        <GruppoInterno config={intFinish} viewMode={viewMode} scenario={scenario} />
-                        <GruppoEsterno config={extFinish} viewMode={viewMode} scenario={scenario} />
-                      </group>
-                  </group>
-              </Suspense>
-              <CameraController viewMode={viewMode} scenario={scenario} />
-            </Canvas>
           </div>
+          
+          <div className="camera-presets-wrapper">
+             {CAMERA_PRESETS.map(preset => (
+                <div 
+                   key={preset.id}
+                   className={`preset-box ${activeAngle.id === preset.id ? 'selected' : ''}`}
+                   onClick={() => handleAngleSelect(preset)}
+                   style={{ pointerEvents: (isSwitching || isScenarioSwitching || isTakingPhoto) ? 'none' : 'auto' }}
+                >
+                   <span className="preset-label">{preset.label}</span>
+                </div>
+             ))}
+          </div>
+
         </div>
 
         <div className="right-scroll-column">
