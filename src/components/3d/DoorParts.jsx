@@ -141,15 +141,15 @@ export function GruppoEsterno({ config, viewMode, scenario }) {
   const texPavimentoExt = '/textures/ambiente/pavimento_ext'; 
   const isHPL = config.category === 'hpl';
   
-  // MODIFICA: In Studio, mostra SEMPRE il pannello esterno (ignora viewMode)
+  // In Studio, mostra SEMPRE il pannello esterno (ignora viewMode)
   const show = scenario === 'studio' || viewMode === 'external';
   
-  // MODIFICA: In Studio, NASCONDI l'ambiente
-  const showEnv = scenario !== 'studio';
+  // MOSTRA i vecchi pavimenti SOLO se lo scenario è 'classic'
+  const showOldEnv = scenario === 'classic';
 
   return (
     <group visible={show}>
-      <group visible={showEnv}>
+      <group visible={showOldEnv}>
         <EnvironmentPart modelPath={`${basePathMuro}pavimento_esterno.glb`} textureFolder={texPavimentoExt} repeat={6} />
       </group>
       
@@ -165,15 +165,15 @@ export function GruppoInterno({ config, viewMode, scenario }) {
   const basePathMuro = '/models/nordic/muro/';
   const texPavimentoInt = '/textures/ambiente/pavimento_int';
   
-  // MODIFICA: In Studio, mostra SEMPRE il pannello interno
+  // In Studio, mostra SEMPRE il pannello interno
   const show = scenario === 'studio' || viewMode === 'internal';
   
-  // MODIFICA: In Studio, NASCONDI l'ambiente
-  const showEnv = scenario !== 'studio';
+  // MOSTRA i vecchi pavimenti SOLO se lo scenario è 'classic'
+  const showOldEnv = scenario === 'classic';
 
   return (
     <group visible={show}>
-      <group visible={showEnv}>
+      <group visible={showOldEnv}>
         <EnvironmentPart modelPath={`${basePathMuro}pavimento_interno.glb`} textureFolder={texPavimentoInt} repeat={6} />
       </group>
       <ConfigurablePart path={path} config={config} />
@@ -188,12 +188,12 @@ export function GruppoComune({ scenario }) {
   const texMuro = '/textures/ambiente/muro';
   const okumeConfig = { folder: 'altro/legno_okume', isTextured: true, id: 'legno_okume_fixed' };
 
-  // MODIFICA: In Studio, NASCONDI il muro
-  const showEnv = scenario !== 'studio';
+  // MOSTRA il vecchio muro SOLO se lo scenario è 'classic'
+  const showOldEnv = scenario === 'classic';
 
   return (
     <group visible={true}>
-      <group visible={showEnv}>
+      <group visible={showOldEnv}>
         <EnvironmentPart modelPath={pathMuro} textureFolder={texMuro} repeat={4} />
       </group>
       <ConfigurablePart path={pathStruttura} config={okumeConfig} />

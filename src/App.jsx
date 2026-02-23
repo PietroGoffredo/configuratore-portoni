@@ -10,6 +10,8 @@ import ScrollToTop from './components/ui/ScrollToTop';
 import Interface from './components/ui/Interface';
 
 import { GruppoEsterno, GruppoInterno, GruppoComune } from './components/3d/DoorParts';
+import { Model as VillaTestModel } from './components/Villa_Test_React'; 
+
 import { TEXTURES_DATA } from './constants/data';
 import './styles/App.css';
 
@@ -67,7 +69,6 @@ function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrigger }) 
         controlsRef.current.update();
         isFirstRender.current = false;
         isAnimating.current = false;
-        // Assicura che i controlli siano attivi in 3D allo start
         controlsRef.current.enableRotate = is3DMode;
         controlsRef.current.enableZoom = is3DMode;
       } else {
@@ -85,15 +86,12 @@ function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrigger }) 
           endTarget.current.set(...activeAngle.target);
           startTime.current = 0;
           isAnimating.current = true;
-          // BLOCCA i controlli durante l'animazione della camera
           controlsRef.current.enableRotate = false;
           controlsRef.current.enableZoom = false;
         }
       }
     }
   }, [activeAngle, cameraTrigger, is3DMode]); 
-
-  // Rimosso l'event listener "start" che interrompeva l'animazione al tocco. Ora l'utente deve aspettare la fine.
 
   useFrame(({ clock }) => {
     if (isAnimating.current && controlsRef.current) {
@@ -104,7 +102,6 @@ function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrigger }) 
       if (progress >= 1.0) {
         progress = 1.0;
         isAnimating.current = false;
-        // SBLOCCA i controlli al termine esatto dell'animazione
         if (is3DMode) {
           controlsRef.current.enableRotate = true;
           controlsRef.current.enableZoom = true;
@@ -239,7 +236,6 @@ export default function App() {
   const [isBlackout, setIsBlackout] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
-  // SCENARIO FADE
   const [scenarioFade, setScenarioFade] = useState({ active: false, image: null, faded: false });
   const [scenario, setScenario] = useState('studio');
   const [isScenarioMenuOpen, setIsScenarioMenuOpen] = useState(false);
@@ -260,7 +256,6 @@ export default function App() {
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const [isDraggingUI, setIsDraggingUI] = useState(false);
   
-  // MOTORE WIPE E PARALLAX STATE
   const [dragUI, setDragUI] = useState({ 
     active: false, image: null, clipPath: 'inset(0 0 0 0)', offset: 0, 
     finalOffset: 0, finalClipPath: 'inset(0 0 0 0)', animating: false, duration: 0.55 
@@ -268,7 +263,6 @@ export default function App() {
 
   const [zoomConfig, setZoomConfig] = useState({ active: false, originX: 50, originY: 50, x: 0, y: 0, instant: false });
   
-  // CORE SINCRONO: Indice master e fotocamera reale
   const currentPresetIndexRef = useRef(0);
   const current3DAngleIdRef = useRef(CAMERA_PRESETS[0].id);
 
@@ -321,7 +315,6 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // --- MOTORE 3D SYNC ---
   const change3DScene = (angle) => {
       if (!angle) return;
       if (angle.type !== viewMode) setViewMode(angle.type);
@@ -335,16 +328,15 @@ export default function App() {
       const needsSync = current3DAngleIdRef.current !== correctAngle.id || viewMode !== correctAngle.type;
       
       if (needsSync) {
-          change3DScene(correctAngle);
-          setTimeout(() => {
-              setDragUI({ active: false, image: null, clipPath: 'inset(0 0 0 0)', finalClipPath: 'inset(0 0 0 0)', offset: 0, finalOffset: 0, animating: false, duration: 0.55 });
-          }, 150); 
+        change3DScene(correctAngle);
+        setTimeout(() => {
+            setDragUI({ active: false, image: null, clipPath: 'inset(0 0 0 0)', finalClipPath: 'inset(0 0 0 0)', offset: 0, finalOffset: 0, animating: false, duration: 0.55 });
+        }, 150); 
       } else {
-          setDragUI({ active: false, image: null, clipPath: 'inset(0 0 0 0)', finalClipPath: 'inset(0 0 0 0)', offset: 0, finalOffset: 0, animating: false, duration: 0.55 });
+        setDragUI({ active: false, image: null, clipPath: 'inset(0 0 0 0)', finalClipPath: 'inset(0 0 0 0)', offset: 0, finalOffset: 0, animating: false, duration: 0.55 });
       }
   };
 
-  // --- ANNULLA TRASCINAMENTO (Ritorno Veloce 0.25s) ---
   const cancelDrag = () => {
     if (!dragRef.current.isDragging) return;
 
@@ -384,7 +376,6 @@ export default function App() {
     setIsDraggingUI(false);
   };
 
-  // --- ESECUZIONE TRANSIZIONE CLICK (0.55s - PRESET BOX) ---
   const executeWipeTransition = async (direction, targetIndex) => {
     const isNext = direction === 'next';
     const targetAngle = CAMERA_PRESETS[targetIndex];
@@ -453,7 +444,6 @@ export default function App() {
     executeWipeTransition(direction, newIndex);
   };
 
-  // --- MOTORE FISICO MOUSE DRAG ---
   const handlePointerDown = (e) => {
     if (interactionMode !== 'static') return;
     if (!zoomConfig.active && dragUI.active) return;
@@ -651,7 +641,6 @@ export default function App() {
     const isVilla = scenario !== 'studio';
     const needsViewSwitch = isVilla && angle.type !== viewMode;
 
-    // MODIFICA: UI IMmediata in 3D Mode
     setUiActiveAngleId(angle.id);
 
     if (needsViewSwitch && interactionMode === '3d') {
@@ -671,7 +660,6 @@ export default function App() {
     } else {
       if (angle.type !== viewMode) setViewMode(angle.type);
       setActiveAngle(angle);
-      // Triggera l'animazione anche se è la stessa angolazione (così se l'utente ha spostato la cam, rientra al posto)
       setCameraTrigger(Date.now());
     }
   };
@@ -688,7 +676,6 @@ export default function App() {
     
     const isVilla = scenario !== 'studio';
 
-    // UI immediata
     if (defaultAngle) setUiActiveAngleId(defaultAngle.id);
 
     if (isVilla && interactionMode === '3d') {
@@ -793,7 +780,7 @@ export default function App() {
 
     const link = document.createElement('a');
     link.href = dataURL;
-    link.download = 'Nordic 01.jpg';
+    link.download = 'Nordic_01_Configurazione.jpg';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -832,7 +819,7 @@ export default function App() {
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
-  const backgroundColor = scenario === 'studio' ? STUDIO_BG_COLOR : '#f4f4f4';
+  const backgroundColor = scenario === 'studio' ? STUDIO_BG_COLOR : '#dce8f2'; 
 
   return (
     <div className="main-layout" id="main-scroll-container">
@@ -847,7 +834,6 @@ export default function App() {
               
               <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
 
-              {/* OVERLAY DEDICATO SCENARI */}
               {scenarioFade.active && scenarioFade.image && (
                 <img 
                   src={scenarioFade.image} 
@@ -856,7 +842,6 @@ export default function App() {
                 />
               )}
 
-              {/* OVERLAY WIPE - PURE REACT STATE */}
               {dragUI.active && dragUI.image && (
                 <img 
                   src={dragUI.image} 
@@ -882,7 +867,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* CURSORE SEMPRE ZOOM-IN (se non zoomato) E BLOCCO EVENTI BROWSER */}
               {interactionMode === 'static' && (
                 <div 
                   className={zoomConfig.active ? (isDraggingUI ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}
@@ -905,20 +889,53 @@ export default function App() {
                   transition: zoomConfig.instant ? 'none' : 'transform 0.3s ease-out'
                 }}
               >
-                <Canvas shadows dpr={[1, 2]} camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} gl={{ preserveDrawingBuffer: true }}>
+                <Canvas 
+                  shadows 
+                  dpr={[1, 2]} 
+                  camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} 
+                  gl={{ 
+                    preserveDrawingBuffer: true,
+                    toneMapping: THREE.ACESFilmicToneMapping, 
+                    toneMappingExposure: 1.0
+                  }}
+                >
                   <WebGLContextHelper contextRef={webglContextRef} />
                   <color attach="background" args={[backgroundColor]} />
                   {scenario === 'studio' && <fog attach="fog" args={[backgroundColor, 8, 20]} />}
+                  {scenario !== 'studio' && <fog attach="fog" args={[backgroundColor, 20, 60]} />} 
                   
                   <Suspense fallback={null}>
                       <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
+                      
                       {scenario === 'studio' && <StudioScene />}
+                      
                       <group position={[0, 0, 0]}>
                           {scenario !== 'studio' && (
                               <>
-                                <ambientLight intensity={0.6} />
-                                <directionalLight position={[8, 12, 5]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0001}/>
-                                <Environment preset="city" blur={0.8} />
+                                {/* Luce di riempimento morbida */}
+                                <ambientLight intensity={0.3} color="#ffffff" />
+                                
+                                {/* Sole con ombre morbide gestite da shadow-radius e mappa 2048px */}
+                                <directionalLight 
+                                  position={[15, 20, 10]} 
+                                  intensity={2.5} 
+                                  color="#fff4e5" 
+                                  castShadow 
+                                  shadow-mapSize={[2048, 2048]} 
+                                  shadow-bias={-0.0001}
+                                  shadow-normalBias={0.02}
+                                  shadow-camera-far={50}
+                                  shadow-camera-left={-15}
+                                  shadow-camera-right={15}
+                                  shadow-camera-top={15}
+                                  shadow-camera-bottom={-15}
+                                  shadow-radius={8} 
+                                />
+                                
+                                {/* L'IMPORTAZIONE DEL TUO FILE HDRI */}
+                                <Environment files="/textures/cielo.exr" background={true} blur={0.05} environmentIntensity={0.8} />
+                                
+                                <VillaTestModel />
                               </>
                           )}
                           <group>
