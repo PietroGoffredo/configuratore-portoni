@@ -26,8 +26,6 @@ dist-ssr
 # ---------------------------------------------------
 # File 3D e Modelli Pesanti (Evitano l'errore 100MB di GitHub)
 # ---------------------------------------------------
-public/Villa_Test_React.glb
-public/models/nordic/scenario/scenario_test.glb
 
 # Se in futuro vorrai ignorare in automatico TUTTI i file .glb o .gltf, 
 # ti basterà togliere il cancelletto (#) dalle due righe qui sotto:

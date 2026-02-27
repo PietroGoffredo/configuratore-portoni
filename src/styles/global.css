@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --font-primary: 'Raleway', sans-serif;
+  --font-navbar: 'Open Sans', sans-serif;
+  --col-white-1: #ffffff;
+  --col-white-2: #f8f8f8;
+  --col-white-3: #e2e3e8;
+  --col-white-4: #e0dede;
+  --col-gold: #bd9b4d;
+  --col-black-1: #404041;
+  --col-black-2: #333333;
+  --col-black-3: #24272d;
+}
+
+/* --- RESET & GLOBAL --- */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--col-white-1);
+  color: var(--col-black-3);
+  overflow: hidden;
+}
+
+.main-layout {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: var(--font-primary);
+}
+
+button, input, textarea, select {
+  font-family: var(--font-primary);
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.navbar, .navbar * {
+  font-family: var(--font-navbar) !important;
+}

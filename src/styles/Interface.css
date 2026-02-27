@@ -1,0 +1,47 @@
+/* --- SIDEBAR COMPONENTS --- */
+.sidebar-header { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--col-white-3); }
+.brand-title { margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; line-height: 1; color: var(--col-black-3); }
+.config-subtitle { margin: 10px 0 0; color: var(--col-black-1); font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; }
+
+/* Accordion */
+.accordion-item { border-bottom: 1px solid var(--col-white-3); width: 100%; }
+.accordion-header { padding: 25px 0; font-weight: 700; font-size: 1.25rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+.accordion-chevron { transition: transform 0.3s ease; }
+.accordion-item.open .accordion-chevron { transform: rotate(180deg); }
+.accordion-collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s ease, overflow 0s 0s; overflow: hidden; }
+.accordion-item.open .accordion-collapse { transition: grid-template-rows 0.35s ease, overflow 0s 0.35s; overflow: visible; }
+.accordion-body { overflow: visible; padding-bottom: 0; opacity: 0; min-height: 0; transition: opacity 0.3s ease; }
+.accordion-item.open .accordion-body { opacity: 1; padding-bottom: 15px; }
+
+/* Texture Selector */
+.selector-wrapper { margin-bottom: 30px; }
+.selector-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.selector-label-title { font-size: 0.95rem; font-weight: 700; color: var(--col-black-2); }
+.info-icon-btn { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 50%; display: flex; align-items: center; margin-left: -3px; transition: all 0.2s; }
+.info-icon-btn:hover { background-color: var(--col-white-3); color: var(--col-black-3); }
+.selector-dynamic-name { font-size: 0.9rem; color: var(--col-gold); font-weight: 600; margin: -8px 0 15px 0; }
+.selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 8px; margin-top: -5px; }
+.fade-in-text { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Texture Option */
+.texture-option { aspect-ratio: 1; border-radius: 6px; position: relative; cursor: pointer; border: 1px solid var(--col-white-3); overflow: visible; }
+.texture-option:hover, .texture-option.selected { border-color: var(--col-white-1); box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold); z-index: 10; }
+.texture-option img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; display: block; }
+.texture-option::after { content: attr(data-label); position: absolute; top: 95%; left: 50%; transform: translateX(-50%); background-color: var(--col-white-1); padding: 7px 10px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--col-white-2); border-radius: 4px; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 100; }
+.texture-option:hover::after { opacity: 1; visibility: visible; top: 105%; transition-delay: 0.6s; }
+
+/* Info Panel */
+.info-panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+.info-panel-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(2px); }
+.info-panel-content { position: absolute; top: 0; right: 0; width: 400px; max-width: 85%; height: 100vh; background-color: var(--col-white-1); box-shadow: -10px 0 40px rgba(0,0,0,0.2); padding: 50px 40px; display: flex; flex-direction: column; overflow-y: auto; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+.info-panel-content.active { transform: translateX(0); }
+.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--col-gold); }
+.info-title { font-size: 1.8rem; font-weight: 700; margin: 0; }
+.info-close-btn { background: transparent; border: none; width: 40px; height: 40px; cursor: pointer; transition: all 0.2s; }
+.info-close-btn:hover { background: var(--col-white-3); }
+.info-text { font-size: 1rem; line-height: 1.8; margin: 0; }
+
+@media screen and (max-width: 1024px) {
+  .info-panel-content { width: 100%; max-width: 100%; }
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { TbInfoCircle, TbX, TbChevronDown } from "react-icons/tb"; 
 import '../../styles/App.css'; 
+import '../../styles/Interface.css';
 
 // --- DATI DESCRIZIONI ---
 const DESCRIPTIONS = {

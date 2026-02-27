@@ -1,0 +1,23 @@
+/* --- RIEPILOGO INFERIORE --- */
+.final-summary-section {
+  width: 100%; max-width: 1400px; margin: 0 auto; display: flex; padding: 100px 20px; background: var(--col-white-1); border-top: 1px solid var(--col-white-3); position: relative; z-index: 20;
+}
+.summary-left { width: 60%; padding-right: 60px; }
+.summary-right { width: 40%; display: flex; flex-direction: column; justify-content: center; }
+
+.photo-grid { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; height: 500px; }
+.photo-item { background: #f0f0f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 1px; }
+.photo-main { grid-column: 1; grid-row: 1 / span 2; }
+
+.summary-list { list-style: none; padding: 0; margin: 40px 0; font-size: 1.1rem; }
+.summary-list li { display: flex; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--col-white-2); }
+.total-price-box { display: flex; justify-content: space-between; font-size: 1.8rem; font-weight: 800; margin-bottom: 40px; color: var(--col-black-3); }
+
+.action-btn { width: 100%; padding: 25px; background: var(--col-black-3); color: var(--col-white-1); border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; font-size: 1rem; transition: background 0.3s; }
+.action-btn:hover { background: #000; }
+
+@media screen and (max-width: 1024px) {
+  .final-summary-section { flex-direction: column; padding: 40px 20px; }
+  .summary-left, .summary-right { width: 100%; padding: 0; }
+  .photo-grid { height: 350px; margin-bottom: 40px; }
+}
