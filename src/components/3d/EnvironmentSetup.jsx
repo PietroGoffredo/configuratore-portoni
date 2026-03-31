@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, useTexture, Sky } from '@react-three/drei';
+import { OrbitControls, Environment, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-
-import { VillaCompleta } from './VillaCompleta';
 
 const SCENE_X_SHIFT = 0.5;  
 const SCENE_Z_SHIFT = 0.1;
@@ -157,46 +155,6 @@ export function StudioScene() {
         <StudioFloor />
         <FakeShadowLayer />
       </group>
-    </group>
-  );
-}
-
-// ============================================================
-// SCENARIO 1: VILLA COMPLETA - LUCE TERMICA (GIORNO REALISTICO)
-// ============================================================
-export function VillaScene({ isNightMode }) {
-  // Posizione del sole a sinistra (-10) per matchare il bake
-  const sunPos = isNightMode ? [0, 10, 0] : [8, 8, 15]; 
-
-  return (
-    <group>
-      <Sky distance={45000} sunPosition={sunPos} inclination={0.2} azimuth={0.25} />
-
-      {/* LUCE AMBIENTALE (Cielo Diffuso)
-        Colorazione fredda (#eaf2ff) per simulare l'azzurro del cielo nelle zone d'ombra.
-      */}
-      <ambientLight 
-        intensity={isNightMode ? 0.05 : 0.4} 
-        color={isNightMode ? "#ffffff" : "#fff8ea"} 
-      />
-
-      {/* IL SOLE DINAMICO (Luce Diretta)
-        Colorazione calda (#fff2e0) per "scaldare" l'intonaco illuminato.
-      */}
-      <directionalLight
-        position={sunPos}
-        intensity={isNightMode ? 0.0 : 1.2}
-        color="#fff2e0" 
-        castShadow 
-        shadow-mapSize={[2048, 2048]} 
-        shadow-bias={-0.0005} 
-      />
-      
-      {/* Riflessi ambientali */}
-      <Environment preset={isNightMode ? "night" : "city"} background={false} environmentIntensity={0.35} />
-
-      {/* LA VILLA COMPLETA (Con le sue ombre pre-calcolate) */}
-      <VillaCompleta position={[0, 0, 0]} />
     </group>
   );
 }

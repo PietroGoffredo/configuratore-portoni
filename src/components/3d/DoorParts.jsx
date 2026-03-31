@@ -129,7 +129,9 @@ const ConfigurablePart = ({ path, config, scenario }) => {
 export function GruppoEsterno({ config, viewMode, scenario }) {
   const basePath = '/models/nordic/nordic_01/';
   const isHPL = config.category === 'hpl';
-  const show = scenario === 'studio' || viewMode === 'external';
+  
+  // Modifica: ora il gruppo esterno scompare quando si clicca "Vista Interna", anche nello Studio
+  const show = viewMode === 'external';
 
   return (
     <group visible={show}>
@@ -142,7 +144,9 @@ export function GruppoEsterno({ config, viewMode, scenario }) {
 
 export function GruppoInterno({ config, viewMode, scenario }) {
   const path = '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb';
-  const show = scenario === 'studio' || viewMode === 'internal';
+  
+  // Modifica: ora il gruppo interno scompare quando si clicca "Vista Esterna", anche nello Studio
+  const show = viewMode === 'internal';
 
   return (
     <group visible={show}>

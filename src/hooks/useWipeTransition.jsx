@@ -391,8 +391,8 @@ export function useWipeTransition({
        return;
     }
 
-    const isVilla = scenario !== 'studio';
-    const needsViewSwitch = isVilla && angle.type !== viewMode;
+    // Modifica: Rimosso il check isVilla. La transizione blackout si attiverà sempre al cambio vista.
+    const needsViewSwitch = angle.type !== viewMode;
 
     setUiActiveAngleId(angle.id);
 
@@ -427,11 +427,10 @@ export function useWipeTransition({
       return;
     }
     
-    const isVilla = scenario !== 'studio';
-
     if (defaultAngle) setUiActiveAngleId(defaultAngle.id);
 
-    if (isVilla && interactionMode === '3d') {
+    // Modifica: Rimosso il check isVilla per forzare il blackout
+    if (interactionMode === '3d') {
       setIsSwitching(true);
       setIsBlackout(true); 
       setTimeout(() => {

@@ -1,17 +1,16 @@
 /* --- SIDEBAR COMPONENTS --- */
-.sidebar-header { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--col-white-3); }
-.brand-title { margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; line-height: 1; color: var(--col-black-3); }
-.config-subtitle { margin: 10px 0 0; color: var(--col-black-1); font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; }
+.sidebar-header { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--col-white-3); display: flex; flex-direction: column; gap: 6px; }
 
-/* Accordion */
-.accordion-item { border-bottom: 1px solid var(--col-white-3); width: 100%; }
-.accordion-header { padding: 25px 0; font-weight: 700; font-size: 1.25rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-.accordion-chevron { transition: transform 0.3s ease; }
-.accordion-item.open .accordion-chevron { transform: rotate(180deg); }
-.accordion-collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s ease, overflow 0s 0s; overflow: hidden; }
-.accordion-item.open .accordion-collapse { transition: grid-template-rows 0.35s ease, overflow 0s 0.35s; overflow: visible; }
-.accordion-body { overflow: visible; padding-bottom: 0; opacity: 0; min-height: 0; transition: opacity 0.3s ease; }
-.accordion-item.open .accordion-body { opacity: 1; padding-bottom: 15px; }
+/* Modifica: rimossi text-transform: uppercase e font-style: italic. Aggiustato il letter-spacing per il testo normale. */
+.config-subtitle { margin: 0; color: var(--col-black-1); font-size: 1.05rem; letter-spacing: 0.5px; }
+.brand-title { margin: 0; font-family: var(--font-primary); font-size: 2.6rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1; color: var(--col-black-3); }
+.change-model-link { font-size: 0.85rem; font-weight: 500; color: var(--col-black-1); text-decoration: underline; transition: color 0.3s ease; width: fit-content; margin-top: 4px; }
+.change-model-link:hover { color: var(--col-gold); }
+
+/* Sezioni Fisse */
+.section-container { border-bottom: 1px solid var(--col-white-3); width: 100%; margin-bottom: 10px; }
+.section-header { padding: 25px 0 15px 0; font-weight: 700; font-size: 1.25rem; color: var(--col-black-3); user-select: none; }
+.section-body { padding-bottom: 15px; }
 
 /* Texture Selector */
 .selector-wrapper { margin-bottom: 30px; }

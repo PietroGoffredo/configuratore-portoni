@@ -11,7 +11,7 @@ import CanvasControls from './components/ui/CanvasControls';
 import OrderSummary from './components/ui/OrderSummary';
 
 import { GruppoEsterno, GruppoInterno, GruppoComune } from './components/3d/DoorParts';
-import { CameraController, StudioScene, VillaScene } from './components/3d/EnvironmentSetup';
+import { CameraController, StudioScene } from './components/3d/EnvironmentSetup';
 import { useWipeTransition } from './hooks/useWipeTransition';
 
 import { TEXTURES_DATA } from './constants/data';
@@ -58,18 +58,12 @@ export default function App() {
   const [intFinish, setIntFinish] = useState(defaultInt);
   
   const [viewMode, setViewMode] = useState('external');
-  const [openSections, setOpenSections] = useState({ esterni: true, interni: true });
   
   const canvasContainerRef = useRef(null); 
   const [isBlackout, setIsBlackout] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
-  const [isNightMode, setIsNightMode] = useState(false);
-
-  const [scenarioFade, setScenarioFade] = useState({ active: false, image: null, faded: false });
-  const [scenario, setScenario] = useState('modern');
-  const [isScenarioMenuOpen, setIsScenarioMenuOpen] = useState(false);
-  const [isScenarioSwitching, setIsScenarioSwitching] = useState(false);
+  const scenario = 'studio';
 
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [mountLoader, setMountLoader] = useState(true);
@@ -88,7 +82,6 @@ export default function App() {
   const [uiActiveAngleId, setUiActiveAngleId] = useState(CAMERA_PRESETS[0].id);
   const [cameraTrigger, setCameraTrigger] = useState(0); 
 
-  const scenarioMenuRef = useRef(null);
   const [isPending, startTransition] = useTransition();
   const [loadingState, setLoadingState] = useState({ category: null, id: null });
 
@@ -97,7 +90,7 @@ export default function App() {
 
   const {
     dragUI, zoomConfig, setZoomConfig, isDraggingUI, setIsDraggingUI,
-    isPhotoZoomed, setIsPhotoZoomed, isFullscreen, toggleFullscreen,
+    isFullscreen, toggleFullscreen,
     handleGalleryNavigation, handlePointerDown, handlePointerMove,
     handlePointerUp, handlePointerCancel, handleStaticClick,
     handleAngleSelect, handleViewChange
@@ -105,7 +98,7 @@ export default function App() {
     CAMERA_PRESETS, interactionMode, viewMode, setViewMode,
     setActiveAngle, setUiActiveAngleId, setCameraTrigger,
     webglContextRef, canvasContainerRef,
-    isSwitching, setIsSwitching, isScenarioSwitching,
+    isSwitching, setIsSwitching, isScenarioSwitching: false,
     isTakingPhoto, isInteractionModeSwitching, setIsBlackout, scenario
   });
 
@@ -113,53 +106,11 @@ export default function App() {
     if (isMobile && interactionMode === '3d') setInteractionMode('static');
   }, [isMobile, interactionMode]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (scenarioMenuRef.current && !scenarioMenuRef.current.contains(event.target)) setIsScenarioMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, []);
-
-  const handleScenarioChange = async (newScenario) => {
-    if (newScenario === scenario || isScenarioSwitching || isSwitching || isTakingPhoto || isInteractionModeSwitching) return;
-    
-    setIsScenarioSwitching(true);
-    if (zoomConfig.active) {
-        setIsPhotoZoomed(false);
-        setIsDraggingUI(false);
-        setZoomConfig(prev => ({ ...prev, active: false, x: 0, y: 0, instant: true }));
-    }
-    
-    if (webglContextRef.current) {
-      const { gl, scene, camera } = webglContextRef.current;
-      gl.render(scene, camera); 
-      setScenarioFade({ active: true, image: gl.domElement.toDataURL('image/jpeg', 1.0), faded: false });
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 50));
-    setScenario(newScenario);
-    setIsScenarioMenuOpen(false); 
-    
-    setTimeout(() => {
-      setScenarioFade(prev => ({ ...prev, faded: true })); 
-      setTimeout(() => {
-          setScenarioFade({ active: false, image: null, faded: false });
-          setIsScenarioSwitching(false); 
-      }, 500); 
-    }, 100); 
-  };
-
   const toggleInteractionMode = () => {
-    if (isInteractionModeSwitching || isSwitching || isScenarioSwitching || isTakingPhoto || dragUI.active) return;
+    if (isInteractionModeSwitching || isSwitching || isTakingPhoto || dragUI.active) return;
     setIsInteractionModeSwitching(true);
     
     if (zoomConfig.active) {
-        setIsPhotoZoomed(false);
         setIsDraggingUI(false);
         setZoomConfig(prev => ({ ...prev, active: false, x: 0, y: 0, instant: true }));
     }
@@ -220,13 +171,10 @@ export default function App() {
   };
 
   useEffect(() => { if (!isPending) setLoadingState({ category: null, id: null }); }, [isPending]);
-  const toggleSection = (section) => setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
-  const backgroundColor = scenario === 'studio' 
-    ? STUDIO_BG_COLOR 
-    : (isNightMode ? '#0f172a' : '#87CEEB'); 
+  const backgroundColor = STUDIO_BG_COLOR; 
 
   return (
     <div className="main-layout" id="main-scroll-container">
@@ -237,13 +185,6 @@ export default function App() {
           <div className="canvas-frame" ref={canvasContainerRef}>
             <div className="canvas-inner-wrapper" style={{ overflow: 'hidden' }}>
               <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
-
-              {scenarioFade.active && scenarioFade.image && (
-                <img 
-                  src={scenarioFade.image} alt="scenario-fade" 
-                  className={`scenario-fade-overlay ${scenarioFade.faded ? 'faded' : ''}`} 
-                />
-              )}
 
               {dragUI.active && dragUI.image && (
                 <img 
@@ -299,20 +240,12 @@ export default function App() {
                   <WebGLContextHelper contextRef={webglContextRef} />
                   
                   <color attach="background" args={[backgroundColor]} />
-                  {scenario === 'studio' && <fog attach="fog" args={[backgroundColor, 8, 20]} />}
-                  {scenario !== 'studio' && <fog attach="fog" args={[backgroundColor, 20, 60]} />} 
+                  <fog attach="fog" args={[backgroundColor, 8, 20]} />
                   
                   <Suspense fallback={null}>
                       <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
                       
-                      {scenario === 'studio' && <StudioScene />}
-                      
-                      {scenario === 'modern' && (
-                        <group position={[0, 0, 0]}>
-                          <VillaScene isNightMode={isNightMode} />
-                          <VillaScene isNightMode={isNightMode} />
-                        </group>
-                      )}
+                      <StudioScene />
                       
                       <group position={[0, 0, 0]}>
                         <GruppoComune scenario={scenario} />
@@ -352,16 +285,12 @@ export default function App() {
               )}
             </div>
 
-            <div ref={scenarioMenuRef}>
+            <div>
               <CanvasControls 
                 isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen}
                 viewMode={viewMode} handleViewChange={handleViewChange}
-                scenario={scenario} isScenarioMenuOpen={isScenarioMenuOpen} 
-                setIsScenarioMenuOpen={setIsScenarioMenuOpen} handleScenarioChange={handleScenarioChange} 
-                isScenarioSwitching={isScenarioSwitching} isSwitching={isSwitching}
                 isTakingPhoto={isTakingPhoto} handleTakePhoto={handleTakePhoto}
                 isMobile={isMobile} interactionMode={interactionMode} toggleInteractionMode={toggleInteractionMode}
-                isNightMode={isNightMode} setIsNightMode={setIsNightMode}
               />
             </div>
           </div>
@@ -382,12 +311,13 @@ export default function App() {
 
         <div className="right-scroll-column">
           <div className="sidebar-header">
-            <h1 className="brand-title">Nordic 01</h1>
+            {/* Ordine esatto: Sottotitolo -> Titolo -> Link cambia modello */}
             <p className="config-subtitle">Configura il tuo ingresso</p>
+            <h1 className="brand-title">Nordic 01</h1>
+            <a href="#" className="change-model-link" onClick={(e) => e.preventDefault()}>Cambia modello</a>
           </div>
 
           <Interface 
-            openSections={openSections} toggleSection={toggleSection}
             finishes={TEXTURES_DATA.finishes}
             extState={extState} intState={intState}
             loadingState={loadingState} 

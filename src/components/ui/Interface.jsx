@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { TbInfoCircle, TbX, TbChevronDown } from "react-icons/tb"; 
+import { TbInfoCircle, TbX } from "react-icons/tb"; 
 import '../../styles/App.css'; 
 import '../../styles/Interface.css';
 
@@ -26,11 +26,9 @@ function InfoPanel({ data, onClose, isClosing }) {
 
   useEffect(() => {
     if (data && !isClosing) {
-      // Un minuscolo ritardo permette al DOM di renderizzare l'elemento prima di applicare ".active", innescando la transizione CSS
       const timer = setTimeout(() => setIsMounted(true), 10);
       return () => clearTimeout(timer);
     } else if (isClosing) {
-      // Quando inizia la chiusura, togliamo ".active" per innescare la transizione di uscita
       setIsMounted(false);
     }
   }, [data, isClosing]);
@@ -58,21 +56,15 @@ function InfoPanel({ data, onClose, isClosing }) {
   );
 }
 
-// --- ACCORDION ITEM ---
-function AccordionItem({ title, isOpen, onClick, children }) {
+// --- SECTION ITEM (Sostituisce l'Accordion) ---
+function SectionItem({ title, children }) {
   return (
-    <div className={`accordion-item ${isOpen ? 'open' : ''}`}>
-      <div className="accordion-header" onClick={onClick}>
-        <span className="accordion-title">{title}</span>
-        <span className="accordion-icon-wrapper">
-           <TbChevronDown size={20} className="accordion-chevron" />
-        </span>
+    <div className="section-container">
+      <div className="section-header">
+        <span className="section-title">{title}</span>
       </div>
-      
-      <div className="accordion-collapse" style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}>
-        <div className="accordion-body">
-          {children}
-        </div>
+      <div className="section-body">
+        {children}
       </div>
     </div>
   );
@@ -162,7 +154,6 @@ function TextureSelector({
 
 // --- INTERFACE PRINCIPALE ---
 export default function Interface({ 
-  openSections, toggleSection, 
   finishes,
   extState, intState,
   loadingState 
@@ -178,7 +169,6 @@ export default function Interface({
 
   const handleCloseInfo = () => {
     setIsClosing(true);
-    // Attende esattamente 400ms (il tempo della transizione CSS) prima di distruggere il componente
     setTimeout(() => {
       setActiveInfo(null);
       setIsClosing(false);
@@ -193,7 +183,7 @@ export default function Interface({
     <>
       <div className="sidebar-content">
         
-        <AccordionItem title="Esterni" isOpen={openSections['esterni']} onClick={() => toggleSection('esterni')}>
+        <SectionItem title="Esterni">
           <TextureSelector 
             label="Laccati" descriptionKey="laccato" category="ext_main" 
             options={laccati} selectedId={extState.finish.id} onSelect={extState.setFinish} 
@@ -204,9 +194,9 @@ export default function Interface({
             options={hpl} selectedId={extState.finish.id} onSelect={extState.setFinish} 
             loadingState={loadingState} onOpenInfo={handleOpenInfo}
           />
-        </AccordionItem>
+        </SectionItem>
 
-        <AccordionItem title="Interni" isOpen={openSections['interni']} onClick={() => toggleSection('interni')}>
+        <SectionItem title="Interni">
           <TextureSelector 
             label="Laccati" descriptionKey="laccato" category="int_main" 
             options={laccati} selectedId={intState.finish.id} onSelect={intState.setFinish} 
@@ -222,7 +212,7 @@ export default function Interface({
             options={nobilitati} selectedId={intState.finish.id} onSelect={intState.setFinish} 
             loadingState={loadingState} onOpenInfo={handleOpenInfo}
           />
-        </AccordionItem>
+        </SectionItem>
       </div>
 
       <InfoPanel 
