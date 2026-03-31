@@ -8,6 +8,13 @@ const getFirstGeometry = (nodes) => {
   return meshName ? nodes[meshName].geometry : null;
 };
 
+// Mantiene la compatibilità per l'Ambient Occlusion del legno/metallo
+const ensureUV2 = (geometry) => {
+  if (geometry && geometry.attributes.uv && !geometry.attributes.uv2) {
+    geometry.setAttribute('uv2', new THREE.BufferAttribute(geometry.attributes.uv.array, 2));
+  }
+};
+
 // --- MATERIALI ---
 const MaterialeSolido = ({ config }) => {
   return (
@@ -59,19 +66,22 @@ const MaterialeTexturizzato = ({ config }) => {
   return <meshStandardMaterial map={textures.map} aoMapIntensity={0.8} envMapIntensity={0.8} {...commonProps} />;
 };
 
-// --- PARTI FISSE ---
-const PlainPart = ({ path, color }) => {
+// --- PARTI FISSE DEL PORTONE ---
+const PlainPart = ({ path, color, scenario }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
+  
+  useMemo(() => ensureUV2(geometry), [geometry]);
+
   if (!geometry) return null;
   return (
-    <mesh geometry={geometry} castShadow receiveShadow frustumCulled={false}>
+    <mesh geometry={geometry} castShadow={scenario === 'modern'} receiveShadow={scenario === 'modern'} frustumCulled={false}>
       <meshStandardMaterial color={color} roughness={0.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
     </mesh>
   );
 };
 
-const MetalPart = ({ path }) => {
+const MetalPart = ({ path, scenario }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
   const propsMetallo = useTexture({
@@ -80,6 +90,7 @@ const MetalPart = ({ path }) => {
     roughnessMap: '/textures/altro/metallo_spazzolato/roughness.jpg',
     aoMap: '/textures/altro/metallo_spazzolato/ao.jpg',
   });
+  
   useMemo(() => {
     Object.values(propsMetallo).forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
     propsMetallo.map.colorSpace = THREE.SRGBColorSpace;
@@ -88,95 +99,54 @@ const MetalPart = ({ path }) => {
     propsMetallo.aoMap.colorSpace = THREE.NoColorSpace;
   }, [propsMetallo]);
 
+  useMemo(() => ensureUV2(geometry), [geometry]);
+
   if (!geometry) return null;
   return (
-    <mesh geometry={geometry} castShadow receiveShadow frustumCulled={false}>
+    <mesh geometry={geometry} castShadow={scenario === 'modern'} receiveShadow={scenario === 'modern'} frustumCulled={false}>
        <meshStandardMaterial {...propsMetallo} color="#ffffff" metalness={1.0} roughness={0.3} envMapIntensity={1.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
     </mesh>
   );
 };
 
-const ConfigurablePart = ({ path, config }) => {
+const ConfigurablePart = ({ path, config, scenario }) => {
   const { nodes } = useGLTF(path);
   const geometry = getFirstGeometry(nodes);
+  
+  useMemo(() => ensureUV2(geometry), [geometry]);
+
   if (!geometry) return null;
   return (
-    <mesh geometry={geometry} castShadow receiveShadow frustumCulled={false}>
+    <mesh geometry={geometry} castShadow={scenario === 'modern'} receiveShadow={scenario === 'modern'} frustumCulled={false}>
       {config.isSolid ? <MaterialeSolido config={config} /> : <MaterialeTexturizzato config={config} />}
     </mesh>
   );
 };
 
-// --- ENVIRONMENT PART ---
-const EnvironmentPart = ({ modelPath, textureFolder, repeat = 4 }) => {
-  const { nodes } = useGLTF(modelPath);
-  const geometry = getFirstGeometry(nodes);
-  const textures = useTexture({
-    map: `${textureFolder}/color.jpg`,
-    normalMap: `${textureFolder}/normal.png`,
-    roughnessMap: `${textureFolder}/roughness.jpg`,
-    aoMap: `${textureFolder}/ao.jpg`,
-  });
-  useMemo(() => {
-    Object.values(textures).forEach(t => { if (t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); } });
-    textures.map.colorSpace = THREE.SRGBColorSpace;
-    textures.normalMap.colorSpace = THREE.NoColorSpace;
-    textures.roughnessMap.colorSpace = THREE.NoColorSpace;
-    textures.aoMap.colorSpace = THREE.NoColorSpace;
-  }, [textures, repeat]);
-
-  if (!geometry) return null;
-  return (
-    <mesh geometry={geometry} receiveShadow castShadow frustumCulled={false}>
-      <meshStandardMaterial {...textures} side={THREE.DoubleSide} shadowSide={THREE.BackSide} envMapIntensity={0.5} />
-    </mesh>
-  );
-};
 
 // --- GRUPPI ---
 
 export function GruppoEsterno({ config, viewMode, scenario }) {
   const basePath = '/models/nordic/nordic_01/';
-  const basePathMuro = '/models/nordic/muro/';
-  const texPavimentoExt = '/textures/ambiente/pavimento_ext'; 
   const isHPL = config.category === 'hpl';
-  
-  // In Studio, mostra SEMPRE il pannello esterno (ignora viewMode)
   const show = scenario === 'studio' || viewMode === 'external';
-  
-  // MOSTRA i vecchi pavimenti SOLO se lo scenario è 'classic'
-  const showOldEnv = scenario === 'classic';
 
   return (
     <group visible={show}>
-      <group visible={showOldEnv}>
-        <EnvironmentPart modelPath={`${basePathMuro}pavimento_esterno.glb`} textureFolder={texPavimentoExt} repeat={6} />
-      </group>
-      
-      <MetalPart path={`${basePath}anello_pannello_esterno.glb`} />
-      <PlainPart path={`${basePath}core_pannello_esterno.glb`} color={isHPL ? '#24272d' : config.hex} />
-      <ConfigurablePart path={`${basePath}overlay_pannello_esterno.glb`} config={config} />
+      <MetalPart path={`${basePath}anello_pannello_esterno.glb`} scenario={scenario} />
+      <PlainPart path={`${basePath}core_pannello_esterno.glb`} color={isHPL ? '#24272d' : config.hex} scenario={scenario} />
+      <ConfigurablePart path={`${basePath}overlay_pannello_esterno.glb`} config={config} scenario={scenario} />
     </group>
   );
 }
 
 export function GruppoInterno({ config, viewMode, scenario }) {
   const path = '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb';
-  const basePathMuro = '/models/nordic/muro/';
-  const texPavimentoInt = '/textures/ambiente/pavimento_int';
-  
-  // In Studio, mostra SEMPRE il pannello interno
   const show = scenario === 'studio' || viewMode === 'internal';
-  
-  // MOSTRA i vecchi pavimenti SOLO se lo scenario è 'classic'
-  const showOldEnv = scenario === 'classic';
 
   return (
     <group visible={show}>
-      <group visible={showOldEnv}>
-        <EnvironmentPart modelPath={`${basePathMuro}pavimento_interno.glb`} textureFolder={texPavimentoInt} repeat={6} />
-      </group>
-      <ConfigurablePart path={path} config={config} />
+      <ConfigurablePart path={path} config={config} scenario={scenario} />
     </group>
   );
 }
@@ -184,25 +154,16 @@ export function GruppoInterno({ config, viewMode, scenario }) {
 export function GruppoComune({ scenario }) {
   const pathStruttura = '/models/nordic/struttura/struttura.glb';
   const pathTelaio = '/models/nordic/telaio/telaio.glb';
-  const pathMuro = '/models/nordic/muro/muro.glb';
-  const texMuro = '/textures/ambiente/muro';
   const okumeConfig = { folder: 'altro/legno_okume', isTextured: true, id: 'legno_okume_fixed' };
-
-  // MOSTRA il vecchio muro SOLO se lo scenario è 'classic'
-  const showOldEnv = scenario === 'classic';
 
   return (
     <group visible={true}>
-      <group visible={showOldEnv}>
-        <EnvironmentPart modelPath={pathMuro} textureFolder={texMuro} repeat={4} />
-      </group>
-      <ConfigurablePart path={pathStruttura} config={okumeConfig} />
-      <ConfigurablePart path={pathTelaio} config={okumeConfig} />
+      <ConfigurablePart path={pathStruttura} config={okumeConfig} scenario={scenario} />
+      <ConfigurablePart path={pathTelaio} config={okumeConfig} scenario={scenario} />
     </group>
   );
 }
 
-// Preload dei file
 const files = [
   '/models/nordic/nordic_01/anello_pannello_esterno.glb',
   '/models/nordic/nordic_01/core_pannello_esterno.glb',
@@ -210,9 +171,6 @@ const files = [
   '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb',
   '/models/nordic/struttura/struttura.glb',
   '/models/nordic/telaio/telaio.glb',
-  '/models/nordic/muro/muro.glb',
-  '/models/nordic/muro/pavimento_interno.glb',
-  '/models/nordic/muro/pavimento_esterno.glb',
   '/textures/altro/metallo_spazzolato/color.jpg',
   '/textures/altro/legno_okume/color.jpg'
 ];

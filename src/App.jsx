@@ -11,7 +11,6 @@ import CanvasControls from './components/ui/CanvasControls';
 import OrderSummary from './components/ui/OrderSummary';
 
 import { GruppoEsterno, GruppoInterno, GruppoComune } from './components/3d/DoorParts';
-import { Model as VillaTestModel } from './components/Villa_Test_React'; 
 import { CameraController, StudioScene, VillaScene } from './components/3d/EnvironmentSetup';
 import { useWipeTransition } from './hooks/useWipeTransition';
 
@@ -65,7 +64,6 @@ export default function App() {
   const [isBlackout, setIsBlackout] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
-  // NUOVO STATO: Gestione Giorno / Notte
   const [isNightMode, setIsNightMode] = useState(false);
 
   const [scenarioFade, setScenarioFade] = useState({ active: false, image: null, faded: false });
@@ -226,7 +224,6 @@ export default function App() {
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
-  // Calcolo del colore di sfondo dinamico basato su scenario e night mode
   const backgroundColor = scenario === 'studio' 
     ? STUDIO_BG_COLOR 
     : (isNightMode ? '#0f172a' : '#87CEEB'); 
@@ -237,9 +234,7 @@ export default function App() {
 
       <div className="configurator-section">
         <div className="left-sticky-column">
-          
           <div className="canvas-frame" ref={canvasContainerRef}>
-            
             <div className="canvas-inner-wrapper" style={{ overflow: 'hidden' }}>
               <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
 
@@ -296,11 +291,13 @@ export default function App() {
                 }}
               >
                 <Canvas 
-                  shadows dpr={[1, 2]} 
+                  shadows 
+                  dpr={[1, 2]} 
                   camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} 
                   gl={{ preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
                 >
                   <WebGLContextHelper contextRef={webglContextRef} />
+                  
                   <color attach="background" args={[backgroundColor]} />
                   {scenario === 'studio' && <fog attach="fog" args={[backgroundColor, 8, 20]} />}
                   {scenario !== 'studio' && <fog attach="fog" args={[backgroundColor, 20, 60]} />} 
@@ -313,8 +310,7 @@ export default function App() {
                       {scenario === 'modern' && (
                         <group position={[0, 0, 0]}>
                           <VillaScene isNightMode={isNightMode} />
-                          {/* Predisposizione per l'accensione LED passata al modello */}
-                          <VillaTestModel isNightMode={isNightMode} />
+                          <VillaScene isNightMode={isNightMode} />
                         </group>
                       )}
                       

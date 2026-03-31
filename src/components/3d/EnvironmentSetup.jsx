@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, useTexture, Sky, Clouds, Cloud } from '@react-three/drei';
+import { OrbitControls, Environment, useTexture, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 
+import { VillaCompleta } from './VillaCompleta';
+
 const SCENE_X_SHIFT = 0.5;  
-const SCENE_Z_SHIFT = 0.1; 
+const SCENE_Z_SHIFT = 0.1;
 
 export function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrigger }) {
   const controlsRef = useRef();
@@ -17,12 +19,10 @@ export function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrig
   
   const isAnimating = useRef(false);
   const startTime = useRef(0);
-  const isFirstRender = useRef(true); 
-  const ANIMATION_DURATION = 1.5; 
+  const isFirstRender = useRef(true);
+  const ANIMATION_DURATION = 1.5;
   
-  const easeInOutCubic = (t) => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
+  const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   useEffect(() => {
     if (activeAngle && controlsRef.current) {
@@ -54,7 +54,7 @@ export function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrig
         }
       }
     }
-  }, [activeAngle, cameraTrigger, is3DMode, camera]); 
+  }, [activeAngle, cameraTrigger, is3DMode, camera]);
 
   useFrame(({ clock }) => {
     if (isAnimating.current && controlsRef.current) {
@@ -77,7 +77,6 @@ export function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrig
 
       const startOffset = startPos.current.clone().sub(startTarget.current);
       const endOffset = endPos.current.clone().sub(endTarget.current);
-
       const startSpherical = new THREE.Spherical().setFromVector3(startOffset);
       const endSpherical = new THREE.Spherical().setFromVector3(endOffset);
 
@@ -98,33 +97,24 @@ export function CameraController({ activeAngle, isBlackout, is3DMode, cameraTrig
   });
   
   return (
-    <OrbitControls 
-      ref={controlsRef} makeDefault enablePan={false} 
-      enableZoom={is3DMode} enableRotate={is3DMode}
-      minPolarAngle={0} maxPolarAngle={Math.PI / 2 - 0.05} 
-      minDistance={2} maxDistance={7}
-    />
+    <OrbitControls ref={controlsRef} makeDefault enablePan={false} enableZoom={is3DMode} enableRotate={is3DMode} minPolarAngle={0} maxPolarAngle={Math.PI / 2 - 0.05} minDistance={2} maxDistance={7} />
   );
 }
 
 function generateFloorAlpha() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createRadialGradient(256, 256, 100, 256, 256, 256);
-  gradient.addColorStop(0, 'white'); gradient.addColorStop(0.4, 'white'); gradient.addColorStop(1, 'black'); 
+  gradient.addColorStop(0, 'white'); gradient.addColorStop(0.4, 'white'); gradient.addColorStop(1, 'black');
   ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
   return new THREE.CanvasTexture(canvas);
 }
 
 function generateShadowAlpha() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
-  gradient.addColorStop(0, 'white'); gradient.addColorStop(1, 'black');   
+  gradient.addColorStop(0, 'white'); gradient.addColorStop(1, 'black');  
   ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
   return new THREE.CanvasTexture(canvas);
 }
@@ -133,21 +123,16 @@ function FakeShadowLayer() {
   const alphaMap = useMemo(() => generateShadowAlpha(), []);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0001, 0]} receiveShadow={false}>
-      <circleGeometry args={[5, 100]} />
+      <circleGeometry args={[7.5, 64]} />
       <meshBasicMaterial color="#351616" alphaMap={alphaMap} transparent={true} opacity={0.2} depthWrite={false} />
     </mesh>
   );
 }
 
 function StudioFloor() {
-  const props = useTexture({
-    map: '/textures/ambiente/studio/color.jpg', normalMap: '/textures/ambiente/studio/normal.png', 
-    roughnessMap: '/textures/ambiente/studio/roughness.jpg', aoMap: '/textures/ambiente/studio/ao.jpg',
-  });
+  const props = useTexture({ map: '/textures/ambiente/studio/color.jpg', normalMap: '/textures/ambiente/studio/normal.png', roughnessMap: '/textures/ambiente/studio/roughness.jpg', aoMap: '/textures/ambiente/studio/ao.jpg' });
   useMemo(() => {
-    Object.values(props).forEach((t) => {
-      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); t.colorSpace = THREE.SRGBColorSpace;
-    });
+    Object.values(props).forEach((t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); t.colorSpace = THREE.SRGBColorSpace; });
     props.normalMap.colorSpace = THREE.NoColorSpace; props.roughnessMap.colorSpace = THREE.NoColorSpace; props.aoMap.colorSpace = THREE.NoColorSpace;
   }, [props]);
   const alphaMap = useMemo(() => generateFloorAlpha(), []);
@@ -176,54 +161,42 @@ export function StudioScene() {
   );
 }
 
-// ------------------------------------------------------------------
-// SCENARIO 1: VILLA MODERNA (ORA CON SUPPORTO GIORNO/NOTTE)
-// ------------------------------------------------------------------
+// ============================================================
+// SCENARIO 1: VILLA COMPLETA - LUCE TERMICA (GIORNO REALISTICO)
+// ============================================================
 export function VillaScene({ isNightMode }) {
+  // Posizione del sole a sinistra (-10) per matchare il bake
+  const sunPos = isNightMode ? [0, 10, 0] : [8, 8, 15]; 
+
   return (
     <group>
-      {/* 1. CIELO PROCEDURALE */}
-      <Sky 
-        distance={45000} 
-        sunPosition={isNightMode ? [0, -10, 0] : [15, 20, 10]} // Sole scende sotto l'orizzonte di notte
-        inclination={0} 
-        azimuth={0.25} 
-        turbidity={0.1}      
-        rayleigh={isNightMode ? 0.1 : 0.5} // Abbassato di notte per evitare l'effetto tramonto rosso
-        mieCoefficient={0.001} 
-        mieDirectionalG={0.7}
-      />
+      <Sky distance={45000} sunPosition={sunPos} inclination={0.2} azimuth={0.25} />
 
-      {/* 2. NUVOLE VOLUMETRICHE */}
-      <Clouds limit={400} material={THREE.MeshBasicMaterial}>
-        <Cloud segments={20} bounds={[15, 2, 2]} volume={10} color={isNightMode ? "#1a2035" : "#ffffff"} position={[-20, 15, -30]} opacity={0.6} speed={0.1} />
-        <Cloud segments={20} bounds={[15, 2, 2]} volume={12} color={isNightMode ? "#1a2035" : "#ffffff"} position={[20, 18, -25]} opacity={0.5} speed={0.2} />
-      </Clouds>
-
-      {/* 3. ILLUMINAZIONE E FIX OMBRE DINAMICI */}
+      {/* LUCE AMBIENTALE (Cielo Diffuso)
+        Colorazione fredda (#eaf2ff) per simulare l'azzurro del cielo nelle zone d'ombra.
+      */}
       <ambientLight 
-        intensity={isNightMode ? 0.05 : 0.3} 
-        color={isNightMode ? "#445588" : "#ffffff"} 
-      /> 
-      
-      <directionalLight 
-        position={[15, 20, 10]} 
-        intensity={isNightMode ? 0.1 : 1.0} // Luce lunare debole di notte
-        color={isNightMode ? "#88aaff" : "#fff4e5"} // Toni freddi di notte, caldi di giorno
+        intensity={isNightMode ? 0.05 : 0.4} 
+        color={isNightMode ? "#ffffff" : "#fff8ea"} 
+      />
+
+      {/* IL SOLE DINAMICO (Luce Diretta)
+        Colorazione calda (#fff2e0) per "scaldare" l'intonaco illuminato.
+      */}
+      <directionalLight
+        position={sunPos}
+        intensity={isNightMode ? 0.0 : 1.2}
+        color="#fff2e0" 
         castShadow 
-        shadow-mapSize={[4096, 4096]} 
-        shadow-bias={-0.0005}         
-        shadow-normalBias={0.05}      
-        shadow-radius={8}             
-        shadow-camera-near={1}
-        shadow-camera-far={60}
-        shadow-camera-left={-20}
-        shadow-camera-right={20}
-        shadow-camera-top={20}
-        shadow-camera-bottom={-20}
+        shadow-mapSize={[2048, 2048]} 
+        shadow-bias={-0.0005} 
       />
       
-      <Environment files="/textures/cielo.exr" background={false} environmentIntensity={isNightMode ? 0.1 : 0.5} />
+      {/* Riflessi ambientali */}
+      <Environment preset={isNightMode ? "night" : "city"} background={false} environmentIntensity={0.35} />
+
+      {/* LA VILLA COMPLETA (Con le sue ombre pre-calcolate) */}
+      <VillaCompleta position={[0, 0, 0]} />
     </group>
   );
 }
