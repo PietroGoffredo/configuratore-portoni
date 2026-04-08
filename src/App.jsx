@@ -11,24 +11,16 @@ import CanvasControls from './components/ui/CanvasControls';
 import OrderSummary from './components/ui/OrderSummary';
 
 import { GruppoEsterno, GruppoInterno, GruppoComune } from './components/3d/DoorParts';
-import { CameraController, StudioScene } from './components/3d/EnvironmentSetup';
+import { CameraController } from './components/3d/CameraController';
+import { ShowroomScene } from './components/3d/ShowroomScene';
+
 import { useWipeTransition } from './hooks/useWipeTransition';
 
 import { TEXTURES_DATA } from './constants/data';
+import { CAMERA_PRESETS } from './config/cameraPresets'; 
 import './styles/App.css';
 
-const STUDIO_BG_COLOR = "#eeeeee"; 
-
-const CAMERA_PRESETS = [
-  { id: 'ext_1', type: 'external', position: [0.5, 1.60, 6.5], target: [0.5, 1.25, 0], label: 'Fronte' },
-  { id: 'ext_2', type: 'external', position: [4.8, 1.60, 4.8], target: [0.5, 1.25, 0], label: 'Lato Dx' },
-  { id: 'ext_3', type: 'external', position: [-3.8, 1.60, 4.8], target: [0.5, 1.25, 0], label: 'Lato Sx' },
-  { id: 'ext_4', type: 'external', position: [2.2, 1.30, 2.8], target: [0.5, 1.10, 0], label: 'Dett. Fr' },
-  { id: 'int_1', type: 'internal', position: [0.5, 1.60, -6.5], target: [0.5, 1.25, 0], label: 'Retro' },
-  { id: 'int_2', type: 'internal', position: [-3.8, 1.60, -4.8], target: [0.5, 1.25, 0], label: 'Retro Dx' },
-  { id: 'int_3', type: 'internal', position: [4.8, 1.60, -4.8], target: [0.5, 1.25, 0], label: 'Retro Sx' },
-  { id: 'int_4', type: 'internal', position: [2.0, 1.30, -2.8], target: [0.5, 1.10, 0], label: 'Dett. Re' }
-];
+const SHOWROOM_BG_COLOR = "#eeeeee"; 
 
 function WebGLContextHelper({ contextRef }) {
   const { gl, scene, camera } = useThree();
@@ -57,13 +49,15 @@ export default function App() {
   const [extFinish, setExtFinish] = useState(defaultExt); 
   const [intFinish, setIntFinish] = useState(defaultInt);
   
+  const [wallColor, setWallColor] = useState('#ffffff');
+  
   const [viewMode, setViewMode] = useState('external');
   
   const canvasContainerRef = useRef(null); 
   const [isBlackout, setIsBlackout] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
 
-  const scenario = 'studio';
+  const scenario = 'showroom';
 
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [mountLoader, setMountLoader] = useState(true);
@@ -174,7 +168,7 @@ export default function App() {
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
-  const backgroundColor = STUDIO_BG_COLOR; 
+  const backgroundColor = SHOWROOM_BG_COLOR; 
 
   return (
     <div className="main-layout" id="main-scroll-container">
@@ -232,7 +226,6 @@ export default function App() {
                 }}
               >
                 <Canvas 
-                  shadows 
                   dpr={[1, 2]} 
                   camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} 
                   gl={{ preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
@@ -245,7 +238,7 @@ export default function App() {
                   <Suspense fallback={null}>
                       <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
                       
-                      <StudioScene />
+                      <ShowroomScene viewMode={viewMode} wallColor={wallColor} />
                       
                       <group position={[0, 0, 0]}>
                         <GruppoComune scenario={scenario} />
@@ -253,9 +246,13 @@ export default function App() {
                         <GruppoEsterno config={extFinish} viewMode={viewMode} scenario={scenario} />
                       </group>
                   </Suspense>
+                  
                   <CameraController 
-                     activeAngle={activeAngle} isBlackout={isBlackout} 
-                     is3DMode={interactionMode === '3d'} cameraTrigger={cameraTrigger}
+                     activeAngle={activeAngle} 
+                     isBlackout={isBlackout} 
+                     is3DMode={interactionMode === '3d'} 
+                     cameraTrigger={cameraTrigger}
+                     viewMode={viewMode}
                   />
                 </Canvas>
               </div>
@@ -291,6 +288,8 @@ export default function App() {
                 viewMode={viewMode} handleViewChange={handleViewChange}
                 isTakingPhoto={isTakingPhoto} handleTakePhoto={handleTakePhoto}
                 isMobile={isMobile} interactionMode={interactionMode} toggleInteractionMode={toggleInteractionMode}
+                wallColor={wallColor} setWallColor={setWallColor} 
+                uiActiveAngleId={uiActiveAngleId}
               />
             </div>
           </div>
@@ -311,7 +310,6 @@ export default function App() {
 
         <div className="right-scroll-column">
           <div className="sidebar-header">
-            {/* Ordine esatto: Sottotitolo -> Titolo -> Link cambia modello */}
             <p className="config-subtitle">Configura il tuo ingresso</p>
             <h1 className="brand-title">Nordic 01</h1>
             <a href="#" className="change-model-link" onClick={(e) => e.preventDefault()}>Cambia modello</a>

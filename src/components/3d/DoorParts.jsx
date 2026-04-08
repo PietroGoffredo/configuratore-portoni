@@ -8,7 +8,6 @@ const getFirstGeometry = (nodes) => {
   return meshName ? nodes[meshName].geometry : null;
 };
 
-// Mantiene la compatibilità per l'Ambient Occlusion del legno/metallo
 const ensureUV2 = (geometry) => {
   if (geometry && geometry.attributes.uv && !geometry.attributes.uv2) {
     geometry.setAttribute('uv2', new THREE.BufferAttribute(geometry.attributes.uv.array, 2));
@@ -75,7 +74,7 @@ const PlainPart = ({ path, color, scenario }) => {
 
   if (!geometry) return null;
   return (
-    <mesh geometry={geometry} castShadow={scenario === 'modern'} receiveShadow={scenario === 'modern'} frustumCulled={false}>
+    <mesh geometry={geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
       <meshStandardMaterial color={color} roughness={0.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
     </mesh>
   );
@@ -103,7 +102,7 @@ const MetalPart = ({ path, scenario }) => {
 
   if (!geometry) return null;
   return (
-    <mesh geometry={geometry} castShadow={scenario === 'modern'} receiveShadow={scenario === 'modern'} frustumCulled={false}>
+    <mesh geometry={geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
        <meshStandardMaterial {...propsMetallo} color="#ffffff" metalness={1.0} roughness={0.3} envMapIntensity={1.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
     </mesh>
   );
@@ -117,20 +116,16 @@ const ConfigurablePart = ({ path, config, scenario }) => {
 
   if (!geometry) return null;
   return (
-    <mesh geometry={geometry} castShadow={scenario === 'modern'} receiveShadow={scenario === 'modern'} frustumCulled={false}>
+    <mesh geometry={geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
       {config.isSolid ? <MaterialeSolido config={config} /> : <MaterialeTexturizzato config={config} />}
     </mesh>
   );
 };
 
-
 // --- GRUPPI ---
-
 export function GruppoEsterno({ config, viewMode, scenario }) {
   const basePath = '/models/nordic/nordic_01/';
   const isHPL = config.category === 'hpl';
-  
-  // Modifica: ora il gruppo esterno scompare quando si clicca "Vista Interna", anche nello Studio
   const show = viewMode === 'external';
 
   return (
@@ -144,8 +139,6 @@ export function GruppoEsterno({ config, viewMode, scenario }) {
 
 export function GruppoInterno({ config, viewMode, scenario }) {
   const path = '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb';
-  
-  // Modifica: ora il gruppo interno scompare quando si clicca "Vista Esterna", anche nello Studio
   const show = viewMode === 'internal';
 
   return (

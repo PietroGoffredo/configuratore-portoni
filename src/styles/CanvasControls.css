@@ -43,7 +43,7 @@
 .btn-fullscreen { position: absolute; top: 15px; right: 15px; }
 .view-controls-vertical { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; transition: all 0.4s ease; }
 .view-controls-vertical.hidden-controls { opacity: 0; visibility: hidden; pointer-events: none; }
-.bottom-left-controls { position: absolute; bottom: 15px; left: 15px; display: flex; gap: 10px; z-index: 25; pointer-events: none; }
+.bottom-left-controls { position: absolute; bottom: 15px; left: 15px; display: flex; gap: 8px; z-index: 25; pointer-events: none; }
 .bottom-left-controls > * { pointer-events: auto; }
 .bottom-right-controls { position: absolute; bottom: 15px; right: 15px; z-index: 25; pointer-events: auto; display: flex; gap: 10px; }
 
@@ -73,9 +73,102 @@
 .spinner-sm { width: 18px; height: 18px; border-width: 2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.color-popup-menu { 
+  position: absolute; 
+  bottom: calc(100% + 8px); 
+  left: 0; 
+  background-color: var(--col-white-1); 
+  padding: 11px; 
+  border-radius: 8px; 
+  box-shadow: 0 4px 18px rgba(0,0,0,0.1); 
+  z-index: 100; 
+  opacity: 0; 
+  visibility: hidden; 
+  transform: translateY(10px); 
+  transition: all 0.3s ease; 
+  pointer-events: none;
+  cursor: default; 
+}
+
+.color-popup-menu.open { 
+  opacity: 1; 
+  visibility: visible; 
+  transform: translateY(0); 
+  pointer-events: auto; 
+}
+
+/* Titolo aggiornato: non corsivo, più spazio sotto */
+.color-menu-title { 
+  display: block; 
+  font-size: 0.85rem; 
+  font-weight: 500; /* Leggermente più marcato ma non bold pieno */
+  color: var(--col-black-2); 
+  margin-bottom: 12px; /* Spazio aumentato sotto il titolo */
+  letter-spacing: 0px; 
+  text-transform: none; 
+}
+
+/* Container opzioni: Gap aumentato */
+.color-options-wrapper { 
+  display: flex; 
+  gap: 8px; /* Distanza tra i riquadri aumentata */
+  align-items: center;
+  height: auto;
+}
+
+/* Riquadri opzioni più grandi */
+.color-option { 
+  width: 50px; /* Ingranditi da 45 a 50 */
+  height: 50px; /* Ingranditi da 45 a 50 */
+  border-radius: 6px; 
+  border: 1px solid var(--col-white-3); 
+  cursor: pointer; 
+  position: relative; 
+  overflow: visible; 
+  transition: none; 
+}
+
+.color-option:hover, 
+.color-option.active { 
+  border-color: var(--col-white-1); 
+  box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold); 
+  z-index: 10; 
+}
+
+/* Etichetta spostata IN BASSO */
+.color-option::after { 
+  content: attr(data-label); 
+  position: absolute; 
+  top: 95%; /* Partenza in basso (come ui-btn) */
+  left: 50%; 
+  transform: translateX(-50%); 
+  background-color: var(--col-white-1); 
+  color: var(--col-black-2); 
+  padding: 7px 10px; 
+  font-size: 0.75rem; 
+  font-weight: 500; 
+  white-space: nowrap; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+  border: 1px solid var(--col-white-2); 
+  border-radius: 4px; 
+  pointer-events: none; 
+  z-index: 1000; 
+  opacity: 0; 
+  visibility: hidden; 
+  transition: all 0.2s ease; 
+}
+
+.color-option:hover::after { 
+  opacity: 1; 
+  visibility: visible; 
+  top: 110%; /* Scende verso il basso all'hover */
+  transition-delay: 0.6s; 
+}
+
 /* Mobile */
 @media screen and (max-width: 1024px) {
   .view-controls-vertical { flex-direction: row; bottom: 15px; top: auto; left: 50%; transform: translateX(-50%); }
   .bottom-left-controls { bottom: 15px; left: 15px; right: auto; }
   .scenario-options-wrapper { flex-direction: column; }
 }
+
