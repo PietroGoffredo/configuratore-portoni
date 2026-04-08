@@ -15,18 +15,16 @@ import { CameraController } from './components/3d/CameraController';
 import { ShowroomScene } from './components/3d/ShowroomScene';
 
 import { useWipeTransition } from './hooks/useWipeTransition';
-
 import { TEXTURES_DATA } from './constants/data';
 import { CAMERA_PRESETS } from './config/cameraPresets'; 
 import './styles/App.css';
 
 const SHOWROOM_BG_COLOR = "#eeeeee"; 
 
+// --- UTILITY COMPONENTS ---
 function WebGLContextHelper({ contextRef }) {
   const { gl, scene, camera } = useThree();
-  useEffect(() => {
-    contextRef.current = { gl, scene, camera };
-  }, [gl, scene, camera, contextRef]);
+  useEffect(() => { contextRef.current = { gl, scene, camera }; }, [gl, scene, camera, contextRef]);
   return null;
 }
 
@@ -35,108 +33,14 @@ function SceneReadyTrigger({ setLoaded }) {
   return null;
 }
 
-export default function App() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+// --- CUSTOM HOOKS (Modularizzazione logica) ---
 
-  const defaultExt = TEXTURES_DATA.finishes.find(f => f.id === 'hpl_113') || TEXTURES_DATA.finishes[0];
-  const defaultInt = TEXTURES_DATA.finishes.find(f => f.id === 'laccato_3151') || TEXTURES_DATA.finishes[0];
-
+// 1. Gestione caricamento e transizione Texture
+function useTextureManager(defaultExt, defaultInt) {
   const [extFinish, setExtFinish] = useState(defaultExt); 
   const [intFinish, setIntFinish] = useState(defaultInt);
-  
-  const [wallColor, setWallColor] = useState('#ffffff');
-  
-  const [viewMode, setViewMode] = useState('external');
-  
-  const canvasContainerRef = useRef(null); 
-  const [isBlackout, setIsBlackout] = useState(false);
-  const [isSwitching, setIsSwitching] = useState(false);
-
-  const scenario = 'showroom';
-
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
-  const [mountLoader, setMountLoader] = useState(true);
-
-  useEffect(() => {
-    if (!isLoadingInitial) {
-      const timer = setTimeout(() => setMountLoader(false), 250);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoadingInitial]);
-
-  const [interactionMode, setInteractionMode] = useState('static'); 
-  const [isInteractionModeSwitching, setIsInteractionModeSwitching] = useState(false);
-  
-  const [activeAngle, setActiveAngle] = useState(CAMERA_PRESETS[0]);
-  const [uiActiveAngleId, setUiActiveAngleId] = useState(CAMERA_PRESETS[0].id);
-  const [cameraTrigger, setCameraTrigger] = useState(0); 
-
-  const [isPending, startTransition] = useTransition();
   const [loadingState, setLoadingState] = useState({ category: null, id: null });
-
-  const webglContextRef = useRef(null);
-  const [isTakingPhoto, setIsTakingPhoto] = useState(false);
-
-  const {
-    dragUI, zoomConfig, setZoomConfig, isDraggingUI, setIsDraggingUI,
-    isFullscreen, toggleFullscreen,
-    handleGalleryNavigation, handlePointerDown, handlePointerMove,
-    handlePointerUp, handlePointerCancel, handleStaticClick,
-    handleAngleSelect, handleViewChange
-  } = useWipeTransition({
-    CAMERA_PRESETS, interactionMode, viewMode, setViewMode,
-    setActiveAngle, setUiActiveAngleId, setCameraTrigger,
-    webglContextRef, canvasContainerRef,
-    isSwitching, setIsSwitching, isScenarioSwitching: false,
-    isTakingPhoto, isInteractionModeSwitching, setIsBlackout, scenario
-  });
-
-  useEffect(() => {
-    if (isMobile && interactionMode === '3d') setInteractionMode('static');
-  }, [isMobile, interactionMode]);
-
-  const toggleInteractionMode = () => {
-    if (isInteractionModeSwitching || isSwitching || isTakingPhoto || dragUI.active) return;
-    setIsInteractionModeSwitching(true);
-    
-    if (zoomConfig.active) {
-        setIsDraggingUI(false);
-        setZoomConfig(prev => ({ ...prev, active: false, x: 0, y: 0, instant: true }));
-    }
-    
-    setTimeout(() => {
-      setInteractionMode(prev => prev === 'static' ? '3d' : 'static');
-      setIsInteractionModeSwitching(false);
-    }, 400); 
-  };
-
-  const handleTakePhoto = async () => {
-    if (isTakingPhoto || !webglContextRef.current || isInteractionModeSwitching) return;
-    setIsTakingPhoto(true);
-
-    await new Promise(resolve => setTimeout(resolve, 50));
-    const { gl, scene, camera } = webglContextRef.current;
-    const originalDpr = gl.getPixelRatio();
-    gl.setPixelRatio(3); 
-    gl.render(scene, camera); 
-    const dataURL = gl.domElement.toDataURL('image/jpeg', 1.0);
-    gl.setPixelRatio(originalDpr);
-    gl.render(scene, camera);
-
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = 'Nordic_01_Configurazione.jpg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setIsTakingPhoto(false);
-  };
+  const [isPending, startTransition] = useTransition();
 
   const preloadImage = (url) => {
     return new Promise((resolve) => {
@@ -165,16 +69,128 @@ export default function App() {
   };
 
   useEffect(() => { if (!isPending) setLoadingState({ category: null, id: null }); }, [isPending]);
+
   const extState = { finish: extFinish, setFinish: (item) => handleTextureChange(setExtFinish, item, 'ext_main') };
   const intState = { finish: intFinish, setFinish: (item) => handleTextureChange(setIntFinish, item, 'int_main') };
 
-  const backgroundColor = SHOWROOM_BG_COLOR; 
+  return { extFinish, intFinish, extState, intState, loadingState };
+}
+
+// 2. Gestione scatto foto HD
+function usePhotoCapture(webglContextRef) {
+  const [isTakingPhoto, setIsTakingPhoto] = useState(false);
+
+  const handleTakePhoto = async (isInteractionModeSwitching) => {
+    if (isTakingPhoto || !webglContextRef.current || isInteractionModeSwitching) return;
+    setIsTakingPhoto(true);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const { gl, scene, camera } = webglContextRef.current;
+    const originalDpr = gl.getPixelRatio();
+    gl.setPixelRatio(3); // Alta risoluzione
+    gl.render(scene, camera); 
+    const dataURL = gl.domElement.toDataURL('image/jpeg', 1.0);
+    gl.setPixelRatio(originalDpr);
+    gl.render(scene, camera);
+
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'Nordic_01_Configurazione.jpg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setIsTakingPhoto(false);
+  };
+
+  return { isTakingPhoto, handleTakePhoto };
+}
+
+
+// === COMPONENTE PRINCIPALE (ORCHESTRATORE) ===
+
+export default function App() {
+  // --- STATI DI BASE ---
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [wallColor, setWallColor] = useState('#ffffff');
+  const [viewMode, setViewMode] = useState('external');
+  const [interactionMode, setInteractionMode] = useState('static'); 
+  const [isInteractionModeSwitching, setIsInteractionModeSwitching] = useState(false);
+  const [isBlackout, setIsBlackout] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [mountLoader, setMountLoader] = useState(true);
+  
+  const [activeAngle, setActiveAngle] = useState(CAMERA_PRESETS[0]);
+  const [uiActiveAngleId, setUiActiveAngleId] = useState(CAMERA_PRESETS[0].id);
+  const [cameraTrigger, setCameraTrigger] = useState(0); 
+
+  const canvasContainerRef = useRef(null); 
+  const webglContextRef = useRef(null);
+  const scenario = 'showroom';
+
+  // --- HOOKS DI GESTIONE ---
+  const defaultExt = TEXTURES_DATA.finishes.find(f => f.id === 'hpl_113') || TEXTURES_DATA.finishes[0];
+  const defaultInt = TEXTURES_DATA.finishes.find(f => f.id === 'laccato_3151') || TEXTURES_DATA.finishes[0];
+  
+  const { extFinish, intFinish, extState, intState, loadingState } = useTextureManager(defaultExt, defaultInt);
+  const { isTakingPhoto, handleTakePhoto } = usePhotoCapture(webglContextRef);
+
+  const {
+    dragUI, zoomConfig, setZoomConfig, isDraggingUI, setIsDraggingUI,
+    isFullscreen, toggleFullscreen,
+    handleGalleryNavigation, handlePointerDown, handlePointerMove,
+    handlePointerUp, handlePointerCancel, handleStaticClick,
+    handleAngleSelect, handleViewChange
+  } = useWipeTransition({
+    CAMERA_PRESETS, interactionMode, viewMode, setViewMode,
+    setActiveAngle, setUiActiveAngleId, setCameraTrigger,
+    webglContextRef, canvasContainerRef,
+    isSwitching, setIsSwitching, isScenarioSwitching: false,
+    isTakingPhoto, isInteractionModeSwitching, setIsBlackout, scenario
+  });
+
+  // --- EFFETTI LIFECYCLE ---
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoadingInitial) {
+      const timer = setTimeout(() => setMountLoader(false), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoadingInitial]);
+
+  useEffect(() => {
+    if (isMobile && interactionMode === '3d') setInteractionMode('static');
+  }, [isMobile, interactionMode]);
+
+  // --- HANDLER INTERFACCIA ---
+  const toggleInteractionMode = () => {
+    if (isInteractionModeSwitching || isSwitching || isTakingPhoto || dragUI.active) return;
+    setIsInteractionModeSwitching(true);
+    
+    if (zoomConfig.active) {
+        setIsDraggingUI(false);
+        setZoomConfig(prev => ({ ...prev, active: false, x: 0, y: 0, instant: true }));
+    }
+    
+    setTimeout(() => {
+      setInteractionMode(prev => prev === 'static' ? '3d' : 'static');
+      setIsInteractionModeSwitching(false);
+    }, 400); 
+  };
 
   return (
     <div className="main-layout" id="main-scroll-container">
       <Navbar />
 
       <div className="configurator-section">
+        
+        {/* COLONNA SINISTRA (Visualizzatore 3D) */}
         <div className="left-sticky-column">
           <div className="canvas-frame" ref={canvasContainerRef}>
             <div className="canvas-inner-wrapper" style={{ overflow: 'hidden' }}>
@@ -207,12 +223,9 @@ export default function App() {
                 <div 
                   className={zoomConfig.active ? (isDraggingUI ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 11, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
-                  onPointerDown={handlePointerDown}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerCancel} 
-                  onDragStart={(e) => e.preventDefault()}
-                  onContextMenu={(e) => e.preventDefault()}
+                  onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel} 
+                  onDragStart={(e) => e.preventDefault()} onContextMenu={(e) => e.preventDefault()}
                   onClick={handleStaticClick}
                 />
               )}
@@ -225,21 +238,14 @@ export default function App() {
                   transition: zoomConfig.instant ? 'none' : 'transform 0.3s ease-out'
                 }}
               >
-                <Canvas 
-                  dpr={[1, 2]} 
-                  camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} 
-                  gl={{ preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
-                >
+                <Canvas dpr={[1, 2]} camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} gl={{ preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}>
                   <WebGLContextHelper contextRef={webglContextRef} />
-                  
-                  <color attach="background" args={[backgroundColor]} />
-                  <fog attach="fog" args={[backgroundColor, 8, 20]} />
+                  <color attach="background" args={[SHOWROOM_BG_COLOR]} />
+                  <fog attach="fog" args={[SHOWROOM_BG_COLOR, 8, 20]} />
                   
                   <Suspense fallback={null}>
                       <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
-                      
                       <ShowroomScene viewMode={viewMode} wallColor={wallColor} />
-                      
                       <group position={[0, 0, 0]}>
                         <GruppoComune scenario={scenario} />
                         <GruppoInterno config={intFinish} viewMode={viewMode} scenario={scenario} />
@@ -247,30 +253,16 @@ export default function App() {
                       </group>
                   </Suspense>
                   
-                  <CameraController 
-                     activeAngle={activeAngle} 
-                     isBlackout={isBlackout} 
-                     is3DMode={interactionMode === '3d'} 
-                     cameraTrigger={cameraTrigger}
-                     viewMode={viewMode}
-                  />
+                  <CameraController activeAngle={activeAngle} isBlackout={isBlackout} is3DMode={interactionMode === '3d'} cameraTrigger={cameraTrigger} viewMode={viewMode} />
                 </Canvas>
               </div>
 
               {isFullscreen && (
                 <>
-                  <button 
-                    className={`ui-btn fs-nav-left fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} 
-                    onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('prev'); }}
-                    onMouseLeave={(e) => e.currentTarget.blur()}
-                  >
+                  <button className={`ui-btn fs-nav-left fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('prev'); }} onMouseLeave={(e) => e.currentTarget.blur()}>
                     <TbChevronLeft size={30} />
                   </button>
-                  <button 
-                    className={`ui-btn fs-nav-right fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} 
-                    onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('next'); }}
-                    onMouseLeave={(e) => e.currentTarget.blur()}
-                  >
+                  <button className={`ui-btn fs-nav-right fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('next'); }} onMouseLeave={(e) => e.currentTarget.blur()}>
                     <TbChevronRight size={30} />
                   </button>
                   <div className={`fs-counter fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`}>
@@ -286,44 +278,39 @@ export default function App() {
               <CanvasControls 
                 isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen}
                 viewMode={viewMode} handleViewChange={handleViewChange}
-                isTakingPhoto={isTakingPhoto} handleTakePhoto={handleTakePhoto}
+                isTakingPhoto={isTakingPhoto} handleTakePhoto={() => handleTakePhoto(isInteractionModeSwitching)}
                 isMobile={isMobile} interactionMode={interactionMode} toggleInteractionMode={toggleInteractionMode}
-                wallColor={wallColor} setWallColor={setWallColor} 
-                uiActiveAngleId={uiActiveAngleId}
+                wallColor={wallColor} setWallColor={setWallColor} uiActiveAngleId={uiActiveAngleId}
               />
             </div>
           </div>
           
           <div className="camera-presets-wrapper">
              {CAMERA_PRESETS.map(preset => (
-                <div 
-                   key={preset.id}
-                   className={`preset-box ${uiActiveAngleId === preset.id ? 'selected' : ''}`}
-                   onClick={() => handleAngleSelect(preset)}
-                   style={{ pointerEvents: 'auto' }} 
-                >
+                <div key={preset.id} className={`preset-box ${uiActiveAngleId === preset.id ? 'selected' : ''}`} onClick={() => handleAngleSelect(preset)} style={{ pointerEvents: 'auto' }}>
                    <span className="preset-label">{preset.label}</span>
                 </div>
              ))}
           </div>
         </div>
 
+        {/* COLONNA DESTRA (Form Interface) */}
         <div className="right-scroll-column">
-          <div className="sidebar-header">
-            <p className="config-subtitle">Configura il tuo ingresso</p>
-            <h1 className="brand-title">Nordic 01</h1>
-            <a href="#" className="change-model-link" onClick={(e) => e.preventDefault()}>Cambia modello</a>
-          </div>
-
           <Interface 
             finishes={TEXTURES_DATA.finishes}
             extState={extState} intState={intState}
             loadingState={loadingState} 
           />
         </div>
+
       </div>
 
-      <OrderSummary extFinish={extFinish} intFinish={intFinish} />
+      <OrderSummary 
+        extFinish={extFinish} 
+        intFinish={intFinish} 
+        webglContextRef={webglContextRef}
+        cameraPresets={CAMERA_PRESETS}
+      />
 
       <Footer />
       <ScrollToTop />

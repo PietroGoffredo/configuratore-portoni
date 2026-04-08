@@ -35,7 +35,27 @@
 .ui-btn:hover { background-color: var(--col-white-3); }
 .ui-btn.active { border-color: var(--col-gold); color: var(--col-gold); }
 .ui-btn:disabled { cursor: default; }
-.ui-btn::after { content: attr(data-label); position: absolute; top: 95%; left: 50%; transform: translateX(-50%); background-color: var(--col-white-1); color: var(--col-black-2); padding: 7px 10px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--col-white-2); border-radius: 4px; pointer-events: none; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
+.ui-btn::after { 
+  content: attr(data-label); 
+  position: absolute; 
+  top: 95%; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  background-color: var(--col-black-3); /* Sfondo scuro */
+  color: var(--col-white-1); /* Testo chiaro */
+  padding: 7px 10px; 
+  font-size: 0.75rem; 
+  font-weight: 500; 
+  white-space: nowrap; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+  border: 1px solid var(--col-black-2); /* Bordo scuro */
+  border-radius: 4px; 
+  pointer-events: none; 
+  z-index: 1000; 
+  opacity: 0; 
+  visibility: hidden; 
+  transition: all 0.2s ease; 
+}
 .ui-btn:hover::after { opacity: 1; visibility: visible; top: 105%; transition-delay: 0.8s; }
 .ui-btn:active::after, .ui-btn:focus::after { opacity: 0 !important; visibility: hidden !important; transition: none !important; }
 
@@ -101,9 +121,9 @@
 .color-menu-title { 
   display: block; 
   font-size: 0.85rem; 
-  font-weight: 500; /* Leggermente più marcato ma non bold pieno */
+  font-weight: 500; 
   color: var(--col-black-2); 
-  margin-bottom: 12px; /* Spazio aumentato sotto il titolo */
+  margin-bottom: 12px; 
   letter-spacing: 0px; 
   text-transform: none; 
 }
@@ -111,15 +131,15 @@
 /* Container opzioni: Gap aumentato */
 .color-options-wrapper { 
   display: flex; 
-  gap: 8px; /* Distanza tra i riquadri aumentata */
+  gap: 8px; 
   align-items: center;
   height: auto;
 }
 
 /* Riquadri opzioni più grandi */
 .color-option { 
-  width: 50px; /* Ingranditi da 45 a 50 */
-  height: 50px; /* Ingranditi da 45 a 50 */
+  width: 50px; 
+  height: 50px; 
   border-radius: 6px; 
   border: 1px solid var(--col-white-3); 
   cursor: pointer; 
@@ -135,21 +155,21 @@
   z-index: 10; 
 }
 
-/* Etichetta spostata IN BASSO */
+/* Etichetta spostata IN BASSO e ricolorata SCURA */
 .color-option::after { 
   content: attr(data-label); 
   position: absolute; 
-  top: 95%; /* Partenza in basso (come ui-btn) */
+  top: 95%; 
   left: 50%; 
   transform: translateX(-50%); 
-  background-color: var(--col-white-1); 
-  color: var(--col-black-2); 
+  background-color: var(--col-black-3); /* Sfondo scuro */
+  color: var(--col-white-1); /* Testo chiaro */
   padding: 7px 10px; 
   font-size: 0.75rem; 
   font-weight: 500; 
   white-space: nowrap; 
   box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-  border: 1px solid var(--col-white-2); 
+  border: 1px solid var(--col-black-2); /* Bordo scuro */
   border-radius: 4px; 
   pointer-events: none; 
   z-index: 1000; 
@@ -161,7 +181,7 @@
 .color-option:hover::after { 
   opacity: 1; 
   visibility: visible; 
-  top: 110%; /* Scende verso il basso all'hover */
+  top: 110%; 
   transition-delay: 0.6s; 
 }
 
@@ -171,4 +191,3 @@
   .bottom-left-controls { bottom: 15px; left: 15px; right: auto; }
   .scenario-options-wrapper { flex-direction: column; }
 }
-
