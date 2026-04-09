@@ -1,0 +1,240 @@
+/* --- OVERLAY MODALE --- */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- CONTENUTO MODALE --- */
+.auth-modal-content {
+  background-color: var(--col-white-1);
+  width: 100%;
+  max-width: 450px;
+  border-radius: 8px;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  padding-left: 40px;
+  padding-right: 40px;
+  position: relative;
+  box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.2);
+  font-family: var(--font-primary);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* --- BOTTONE CHIUSURA --- */
+.auth-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: transparent;
+  border-style: none;
+  cursor: pointer;
+  color: var(--col-black-2);
+  transition-property: color;
+  transition-duration: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-close-btn:hover {
+  color: var(--col-black-3);
+}
+
+/* --- INTESTAZIONE --- */
+.auth-header {
+  margin-bottom: 24px;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: var(--col-black-2);
+  line-height: 1.5;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* --- TABS (ACCEDI / REGISTRATI) --- */
+.auth-tabs {
+  display: flex;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--col-white-3);
+  margin-bottom: 24px;
+}
+
+.auth-tab {
+  flex-grow: 1;
+  background-color: transparent;
+  border-style: none;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--col-black-2);
+  cursor: pointer;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+  transition-property: all;
+  transition-duration: 0.2s;
+}
+
+.auth-tab.active {
+  color: var(--col-gold);
+  border-bottom-color: var(--col-gold);
+}
+
+.auth-tab:hover:not(.active) {
+  color: var(--col-black-3);
+}
+
+/* --- FORM INPUTS --- */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: flex;
+  column-gap: 16px;
+  width: 100%;
+}
+
+.form-row .input-group {
+  flex-grow: 1;
+}
+
+.input-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--col-black-2);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+
+.input-group input {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  padding-left: 14px;
+  padding-right: 14px;
+  border-radius: 4px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--col-white-3);
+  background-color: var(--col-white-2);
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  color: var(--col-black-3);
+  outline-style: none;
+  transition-property: border-color, background-color;
+  transition-duration: 0.2s;
+}
+
+.input-group input:focus {
+  border-color: var(--col-gold);
+  background-color: var(--col-white-1);
+}
+
+/* --- SEZIONE GDPR CHECKBOX --- */
+.gdpr-section {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: var(--col-white-2);
+  border-radius: 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--col-white-3);
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.checkbox-container:last-child {
+  margin-bottom: 0;
+}
+
+.checkbox-container input {
+  margin-top: 3px;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: var(--col-gold);
+}
+
+.checkbox-text {
+  font-size: 0.75rem;
+  color: var(--col-black-2);
+  line-height: 1.4;
+}
+
+.checkbox-text a {
+  color: var(--col-black-3);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* --- MESSAGGI DI ERRORE / SUCCESSO --- */
+.auth-message {
+  margin-top: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.auth-message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #fca5a5;
+}
+
+.auth-message.success {
+  background-color: #dcfce7;
+  color: #166534;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #86efac;
+}
+
+/* --- RESPONSIVE --- */
+@media screen and (max-width: 768px) {
+  .auth-modal-content {
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 90%;
+  }
+}

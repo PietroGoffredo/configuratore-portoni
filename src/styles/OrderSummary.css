@@ -281,6 +281,188 @@
   border-color: var(--col-gold);
 }
 
+/* =========================================================
+   TEMPLATE PDF NASCOSTO (BROCHURE STYLE)
+========================================================= */
+
+/* Nascondiamo il container dalla vista dell'utente ma lo teniamo nel DOM */
+.pdf-export-container {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  z-index: -1000;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Misura esatta di un Foglio A4 a 96 DPI */
+.pdf-page {
+  width: 794px;
+  height: 1123px;
+  background-color: #ffffff;
+  padding-top: 50px;
+  padding-bottom: 50px;
+  padding-left: 50px;
+  padding-right: 50px;
+  box-sizing: border-box;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #333333;
+  position: relative;
+}
+
+/* Header PDF */
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: #f0f0f0;
+  padding-bottom: 20px;
+  margin-bottom: 40px;
+}
+
+.pdf-logo {
+  height: 40px;
+  object-fit: contain;
+}
+
+.pdf-code {
+  font-size: 12px;
+  color: #888888;
+  text-align: right;
+}
+
+/* Hero Section (Pagina 1) */
+.pdf-hero {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.pdf-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 30px;
+  letter-spacing: -0.5px;
+}
+
+.pdf-hero-img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f8f8f8;
+}
+
+/* Tabelle PDF */
+.pdf-summary-table, .pdf-specs-table {
+  width: 100%;
+}
+
+.pdf-table-row, .pdf-spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #eeeeee;
+  font-size: 14px;
+}
+
+.pdf-table-header {
+  font-weight: 700;
+  color: #888888;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.pdf-total-row {
+  font-weight: 700;
+  font-size: 18px;
+  color: #111111;
+  border-bottom-style: none;
+  margin-top: 10px;
+}
+
+.pdf-disclaimer {
+  font-size: 10px;
+  color: #aaaaaa;
+  margin-top: 20px;
+}
+
+/* Griglia Immagini (Pagina 2) */
+.pdf-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 20px;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: #bd9b4d; /* Dettaglio Oro */
+  padding-bottom: 10px;
+  display: inline-block;
+}
+
+.pdf-images-grid {
+  display: flex;
+  column-gap: 20px;
+}
+
+.pdf-img-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-img-box img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f8f8f8;
+  margin-bottom: 10px;
+}
+
+.pdf-img-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pdf-spec-cat {
+  font-weight: 600;
+  color: #555555;
+  width: 40%;
+}
+
+.pdf-spec-val {
+  font-weight: 400;
+  color: #111111;
+  text-align: right;
+  width: 60%;
+}
+
+.pdf-footer {
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+  right: 50px;
+  text-align: center;
+  font-size: 10px;
+  color: #aaaaaa;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #eeeeee;
+  padding-top: 20px;
+}
+
 /* --- RESPONSIVE DESIGN --- */
 @media screen and (max-width: 1024px) {
   .final-summary-section {

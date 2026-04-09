@@ -9,6 +9,7 @@ import ScrollToTop from './components/ui/ScrollToTop';
 import Interface from './components/ui/Interface';
 import CanvasControls from './components/ui/CanvasControls';
 import OrderSummary from './components/ui/OrderSummary';
+import ProfileDashboard from './components/ui/ProfileDashboard'; // <-- IMPORTANTE: Aggiunto l'import della Dashboard
 
 import { GruppoEsterno, GruppoInterno, GruppoComune } from './components/3d/DoorParts';
 import { CameraController } from './components/3d/CameraController';
@@ -33,7 +34,7 @@ function SceneReadyTrigger({ setLoaded }) {
   return null;
 }
 
-// --- CUSTOM HOOKS (Modularizzazione logica) ---
+// --- CUSTOM HOOKS ---
 
 // 1. Gestione caricamento e transizione Texture
 function useTextureManager(defaultExt, defaultInt) {
@@ -110,6 +111,9 @@ function usePhotoCapture(webglContextRef) {
 // === COMPONENTE PRINCIPALE (ORCHESTRATORE) ===
 
 export default function App() {
+  // --- STATI DI ROUTING (Nuovo stato per gestire le pagine) ---
+  const [currentView, setCurrentView] = useState('configurator'); // 'configurator' | 'dashboard'
+
   // --- STATI DI BASE ---
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const [wallColor, setWallColor] = useState('#ffffff');
@@ -186,131 +190,144 @@ export default function App() {
 
   return (
     <div className="main-layout" id="main-scroll-container">
-      <Navbar />
+      {/* Passiamo la funzione setCurrentView alla Navbar per permetterle di cambiare pagina */}
+      <Navbar setCurrentView={setCurrentView} currentView={currentView} />
 
-      <div className="configurator-section">
-        
-        {/* COLONNA SINISTRA (Visualizzatore 3D) */}
-        <div className="left-sticky-column">
-          <div className="canvas-frame" ref={canvasContainerRef}>
-            <div className="canvas-inner-wrapper" style={{ overflow: 'hidden' }}>
-              <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
+      {currentView === 'configurator' ? (
+        <>
+          {/* =========================================
+              VISTA CONFIGURATORE (Default)
+          ========================================= */}
+          <div className="configurator-section">
+            
+            {/* COLONNA SINISTRA (Visualizzatore 3D) */}
+            <div className="left-sticky-column">
+              <div className="canvas-frame" ref={canvasContainerRef}>
+                <div className="canvas-inner-wrapper" style={{ overflow: 'hidden' }}>
+                  <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
 
-              {dragUI.active && dragUI.image && (
-                <img 
-                  src={dragUI.image} draggable={false} alt="dragging"
-                  className="scenario-transition-overlay"
-                  style={{
-                    clipPath: dragUI.animating ? dragUI.finalClipPath : dragUI.clipPath,
-                    transform: `translateX(${dragUI.animating ? dragUI.finalOffset : dragUI.offset}px)`,
-                    transition: dragUI.animating ? `clip-path ${dragUI.duration}s ease-out, transform ${dragUI.duration}s ease-out` : 'none',
-                    opacity: 1
-                  }}
-                />
-              )}
+                  {dragUI.active && dragUI.image && (
+                    <img 
+                      src={dragUI.image} draggable={false} alt="dragging"
+                      className="scenario-transition-overlay"
+                      style={{
+                        clipPath: dragUI.animating ? dragUI.finalClipPath : dragUI.clipPath,
+                        transform: `translateX(${dragUI.animating ? dragUI.finalOffset : dragUI.offset}px)`,
+                        transition: dragUI.animating ? `clip-path ${dragUI.duration}s ease-out, transform ${dragUI.duration}s ease-out` : 'none',
+                        opacity: 1
+                      }}
+                    />
+                  )}
 
-              <div className={`mode-switch-overlay ${isInteractionModeSwitching ? 'active' : ''}`}>
-                <div className="spinner-canvas"></div>
-              </div>
-
-              {mountLoader && (
-                <div className={`initial-loader-overlay ${!isLoadingInitial ? 'faded' : ''}`}>
-                  <div className="spinner-canvas"></div>
-                </div>
-              )}
-
-              {interactionMode === 'static' && (
-                <div 
-                  className={zoomConfig.active ? (isDraggingUI ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 11, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
-                  onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel} 
-                  onDragStart={(e) => e.preventDefault()} onContextMenu={(e) => e.preventDefault()}
-                  onClick={handleStaticClick}
-                />
-              )}
-
-              <div 
-                className="canvas-zoom-container"
-                style={{
-                  transform: zoomConfig.active ? `scale(2) translate(${zoomConfig.x}px, ${zoomConfig.y}px)` : 'scale(1) translate(0px, 0px)',
-                  transformOrigin: `${zoomConfig.originX}% ${zoomConfig.originY}%`,
-                  transition: zoomConfig.instant ? 'none' : 'transform 0.3s ease-out'
-                }}
-              >
-                <Canvas dpr={[1, 2]} camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} gl={{ preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}>
-                  <WebGLContextHelper contextRef={webglContextRef} />
-                  <color attach="background" args={[SHOWROOM_BG_COLOR]} />
-                  <fog attach="fog" args={[SHOWROOM_BG_COLOR, 8, 20]} />
-                  
-                  <Suspense fallback={null}>
-                      <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
-                      <ShowroomScene viewMode={viewMode} wallColor={wallColor} />
-                      <group position={[0, 0, 0]}>
-                        <GruppoComune scenario={scenario} />
-                        <GruppoInterno config={intFinish} viewMode={viewMode} scenario={scenario} />
-                        <GruppoEsterno config={extFinish} viewMode={viewMode} scenario={scenario} />
-                      </group>
-                  </Suspense>
-                  
-                  <CameraController activeAngle={activeAngle} isBlackout={isBlackout} is3DMode={interactionMode === '3d'} cameraTrigger={cameraTrigger} viewMode={viewMode} />
-                </Canvas>
-              </div>
-
-              {isFullscreen && (
-                <>
-                  <button className={`ui-btn fs-nav-left fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('prev'); }} onMouseLeave={(e) => e.currentTarget.blur()}>
-                    <TbChevronLeft size={30} />
-                  </button>
-                  <button className={`ui-btn fs-nav-right fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('next'); }} onMouseLeave={(e) => e.currentTarget.blur()}>
-                    <TbChevronRight size={30} />
-                  </button>
-                  <div className={`fs-counter fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`}>
-                    <span className="fs-counter-current">{CAMERA_PRESETS.findIndex(p => p.id === uiActiveAngleId) + 1}</span>
-                    <span className="fs-counter-divider"> / </span>
-                    <span className="fs-counter-total">{CAMERA_PRESETS.length}</span>
+                  <div className={`mode-switch-overlay ${isInteractionModeSwitching ? 'active' : ''}`}>
+                    <div className="spinner-canvas"></div>
                   </div>
-                </>
-              )}
+
+                  {mountLoader && (
+                    <div className={`initial-loader-overlay ${!isLoadingInitial ? 'faded' : ''}`}>
+                      <div className="spinner-canvas"></div>
+                    </div>
+                  )}
+
+                  {interactionMode === 'static' && (
+                    <div 
+                      className={zoomConfig.active ? (isDraggingUI ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 11, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
+                      onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel} 
+                      onDragStart={(e) => e.preventDefault()} onContextMenu={(e) => e.preventDefault()}
+                      onClick={handleStaticClick}
+                    />
+                  )}
+
+                  <div 
+                    className="canvas-zoom-container"
+                    style={{
+                      transform: zoomConfig.active ? `scale(2) translate(${zoomConfig.x}px, ${zoomConfig.y}px)` : 'scale(1) translate(0px, 0px)',
+                      transformOrigin: `${zoomConfig.originX}% ${zoomConfig.originY}%`,
+                      transition: zoomConfig.instant ? 'none' : 'transform 0.3s ease-out'
+                    }}
+                  >
+                    <Canvas dpr={[1, 2]} camera={{ position: CAMERA_PRESETS[0].position, fov: 40 }} gl={{ preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}>
+                      <WebGLContextHelper contextRef={webglContextRef} />
+                      <color attach="background" args={[SHOWROOM_BG_COLOR]} />
+                      <fog attach="fog" args={[SHOWROOM_BG_COLOR, 8, 20]} />
+                      
+                      <Suspense fallback={null}>
+                          <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
+                          <ShowroomScene viewMode={viewMode} wallColor={wallColor} />
+                          <group position={[0, 0, 0]}>
+                            <GruppoComune scenario={scenario} />
+                            <GruppoInterno config={intFinish} viewMode={viewMode} scenario={scenario} />
+                            <GruppoEsterno config={extFinish} viewMode={viewMode} scenario={scenario} />
+                          </group>
+                      </Suspense>
+                      
+                      <CameraController activeAngle={activeAngle} isBlackout={isBlackout} is3DMode={interactionMode === '3d'} cameraTrigger={cameraTrigger} viewMode={viewMode} />
+                    </Canvas>
+                  </div>
+
+                  {isFullscreen && (
+                    <>
+                      <button className={`ui-btn fs-nav-left fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('prev'); }} onMouseLeave={(e) => e.currentTarget.blur()}>
+                        <TbChevronLeft size={30} />
+                      </button>
+                      <button className={`ui-btn fs-nav-right fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('next'); }} onMouseLeave={(e) => e.currentTarget.blur()}>
+                        <TbChevronRight size={30} />
+                      </button>
+                      <div className={`fs-counter fs-ui-element ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`}>
+                        <span className="fs-counter-current">{CAMERA_PRESETS.findIndex(p => p.id === uiActiveAngleId) + 1}</span>
+                        <span className="fs-counter-divider"> / </span>
+                        <span className="fs-counter-total">{CAMERA_PRESETS.length}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div>
+                  <CanvasControls 
+                    isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen}
+                    viewMode={viewMode} handleViewChange={handleViewChange}
+                    isTakingPhoto={isTakingPhoto} handleTakePhoto={() => handleTakePhoto(isInteractionModeSwitching)}
+                    isMobile={isMobile} interactionMode={interactionMode} toggleInteractionMode={toggleInteractionMode}
+                    wallColor={wallColor} setWallColor={setWallColor} uiActiveAngleId={uiActiveAngleId}
+                  />
+                </div>
+              </div>
+              
+              <div className="camera-presets-wrapper">
+                 {CAMERA_PRESETS.map(preset => (
+                    <div key={preset.id} className={`preset-box ${uiActiveAngleId === preset.id ? 'selected' : ''}`} onClick={() => handleAngleSelect(preset)} style={{ pointerEvents: 'auto' }}>
+                       <span className="preset-label">{preset.label}</span>
+                    </div>
+                 ))}
+              </div>
             </div>
 
-            <div>
-              <CanvasControls 
-                isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen}
-                viewMode={viewMode} handleViewChange={handleViewChange}
-                isTakingPhoto={isTakingPhoto} handleTakePhoto={() => handleTakePhoto(isInteractionModeSwitching)}
-                isMobile={isMobile} interactionMode={interactionMode} toggleInteractionMode={toggleInteractionMode}
-                wallColor={wallColor} setWallColor={setWallColor} uiActiveAngleId={uiActiveAngleId}
+            {/* COLONNA DESTRA (Form Interface) */}
+            <div className="right-scroll-column">
+              <Interface 
+                finishes={TEXTURES_DATA.finishes}
+                extState={extState} intState={intState}
+                loadingState={loadingState} 
               />
             </div>
-          </div>
-          
-          <div className="camera-presets-wrapper">
-             {CAMERA_PRESETS.map(preset => (
-                <div key={preset.id} className={`preset-box ${uiActiveAngleId === preset.id ? 'selected' : ''}`} onClick={() => handleAngleSelect(preset)} style={{ pointerEvents: 'auto' }}>
-                   <span className="preset-label">{preset.label}</span>
-                </div>
-             ))}
-          </div>
-        </div>
 
-        {/* COLONNA DESTRA (Form Interface) */}
-        <div className="right-scroll-column">
-          <Interface 
-            finishes={TEXTURES_DATA.finishes}
-            extState={extState} intState={intState}
-            loadingState={loadingState} 
+          </div>
+
+          <OrderSummary 
+            extFinish={extFinish} 
+            intFinish={intFinish} 
+            webglContextRef={webglContextRef}
+            cameraPresets={CAMERA_PRESETS}
           />
-        </div>
-
-      </div>
-
-      <OrderSummary 
-        extFinish={extFinish} 
-        intFinish={intFinish} 
-        webglContextRef={webglContextRef}
-        cameraPresets={CAMERA_PRESETS}
-      />
+        </>
+      ) : (
+        /* =========================================
+            VISTA AREA RISERVATA (Dashboard)
+        ========================================= */
+        <ProfileDashboard onLogout={() => setCurrentView('configurator')} />
+      )}
 
       <Footer />
       <ScrollToTop />
