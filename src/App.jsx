@@ -1,4 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+// AGGIUNTO: Import delle icone mancanti che causavano l'errore in fullscreen
+import { TbChevronLeft, TbChevronRight } from "react-icons/tb"; 
+
 import Navbar from './components/ui/Navbar';
 import Footer from './components/ui/Footer';
 import ScrollToTop from './components/ui/ScrollToTop';
@@ -35,7 +38,6 @@ export default function App() {
   const webglContextRef = useRef(null);
   const scenario = 'showroom';
 
-  // HOOKS MODULARIZZATI
   const { extFinish, intFinish, extState, intState, loadingState } = useTextureManager(
     TEXTURES_DATA.finishes.find(f => f.id === 'hpl_113'),
     TEXTURES_DATA.finishes.find(f => f.id === 'laccato_3151')
