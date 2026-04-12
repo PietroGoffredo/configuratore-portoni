@@ -2,11 +2,7 @@
 import React, { useMemo } from 'react';
 import { useGLTF, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-
-const getFirstGeometry = (nodes) => {
-  const meshName = Object.keys(nodes).find(key => nodes[key].type === 'Mesh');
-  return meshName ? nodes[meshName].geometry : null;
-};
+import { getFirstGeometry } from './Generic'; // <-- Importiamo da Generic.jsx
 
 const ensureUV2 = (geometry) => {
   if (geometry && geometry.attributes.uv && !geometry.attributes.uv2) {

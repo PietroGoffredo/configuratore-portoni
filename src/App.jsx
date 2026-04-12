@@ -95,7 +95,6 @@ export default function App() {
                 <div className="canvas-inner-wrapper" style={{ overflow: 'hidden' }}>
                   <div className={`blackout-overlay ${isBlackout ? 'active' : ''}`}></div>
                   
-                  {/* Overlay Transizione Scenari */}
                   {dragUI.active && dragUI.image && (
                     <img src={dragUI.image} alt="dragging" className="scenario-transition-overlay"
                       style={{
@@ -109,7 +108,6 @@ export default function App() {
                   <div className={`mode-switch-overlay ${isInteractionModeSwitching ? 'active' : ''}`}><div className="spinner-canvas"></div></div>
                   {mountLoader && <div className={`initial-loader-overlay ${!isLoadingInitial ? 'faded' : ''}`}><div className="spinner-canvas"></div></div>}
 
-                  {/* Input Invisible per Zoom Statico */}
                   {interactionMode === 'static' && (
                     <div className={zoomConfig.active ? (isDraggingUI ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'}
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 11, touchAction: 'none' }}
@@ -117,7 +115,6 @@ export default function App() {
                     />
                   )}
 
-                  {/* IL MOTORE 3D ESTRATTO */}
                   <Experience 
                     webglContextRef={webglContextRef}
                     setIsLoadingInitial={setIsLoadingInitial}
@@ -134,7 +131,6 @@ export default function App() {
                     isDraggingUI={isDraggingUI}
                   />
 
-                  {/* UI Navigazione Fullscreen */}
                   {isFullscreen && (
                     <>
                       <button className={`ui-btn fs-nav-left ${interactionMode === '3d' ? 'hidden-fs-ui' : ''}`} onClick={(e) => { e.stopPropagation(); handleGalleryNavigation('prev'); }}><TbChevronLeft size={30} /></button>
