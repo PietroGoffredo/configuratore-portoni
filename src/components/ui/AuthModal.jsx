@@ -261,7 +261,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, externalMes
                     <div className="input-group"><label>Nome <span className="req-ast">*</span></label><input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Nome" /></div>
                     <div className="input-group"><label>Cognome <span className="req-ast">*</span></label><input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Cognome" /></div>
                   </div>
-                  <div className="input-group"><label>Azienda <span className="req-ast">*</span></label><input type="text" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nome azienda" /></div>
+                  <div className="input-group"><label>Azienda <span className="req-ast">*</span></label><input type="text" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Ragione sociale" /></div>
                   <div className="form-row">
                     <div className="input-group" style={{ flex: '0 0 30%' }}><label>CAP <span className="req-ast">*</span></label><input type="text" required maxLength="5" value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, ''))} placeholder="CAP" /></div>
                     <div className="input-group" style={{ flex: '1' }}><label>Telefono <span className="req-ast">*</span></label><input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefono" /></div>

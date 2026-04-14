@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { TbDownload, TbCheck, TbPhoto } from "react-icons/tb";
+import { TbDownload, TbSend, TbPhoto } from "react-icons/tb";
 import { supabase } from '../../config/supabaseClient';
 import '../../styles/OrderSummary.css';
 
@@ -27,12 +27,10 @@ export default function OrderSummary({
     detail: null
   });
 
-  // Genera un codice di configurazione casuale (stile Porsche: PT1VU844)
   useEffect(() => {
     setConfigCode('FIORE-' + Math.random().toString(36).substring(2, 8).toUpperCase());
   }, []);
 
-  // --- 1. INTERSECTION OBSERVER ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -45,7 +43,6 @@ export default function OrderSummary({
     return () => { if (summaryRef.current) observer.unobserve(summaryRef.current); };
   }, []);
 
-  // --- 2. CATTURA SCREENSHOTS 3D ---
   useEffect(() => {
     const handleCaptureScreenshots = async () => {
       if (!webglContextRef || !webglContextRef.current || !cameraPresets) return;
@@ -57,7 +54,7 @@ export default function OrderSummary({
       const originalRot = camera.rotation.clone();
       const originalDpr = gl.getPixelRatio();
 
-      gl.setPixelRatio(3); // Altissima risoluzione per il PDF
+      gl.setPixelRatio(3); 
 
       const captureFrame = (positionArray, lookAtY = 0) => {
         camera.position.fromArray(positionArray);
@@ -88,7 +85,6 @@ export default function OrderSummary({
     
   }, [isVisible, extFinish?.id, intFinish?.id]);
 
-  // --- 3. GENERAZIONE PDF MULTIPAGINA PROFESSIONALE ---
   const handleDownloadPDF = async () => {
     if (!pdfPage1Ref.current || !pdfPage2Ref.current) return;
     setIsGeneratingPdf(true);
@@ -97,14 +93,11 @@ export default function OrderSummary({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Opzioni per alta qualità
       const canvasOpts = { scale: 2, useCORS: true, backgroundColor: '#ffffff' };
 
-      // Genera Pagina 1
       const canvas1 = await html2canvas(pdfPage1Ref.current, canvasOpts);
       pdf.addImage(canvas1.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-      // Genera Pagina 2
       pdf.addPage();
       const canvas2 = await html2canvas(pdfPage2Ref.current, canvasOpts);
       pdf.addImage(canvas2.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdfWidth, pdfHeight);
@@ -117,8 +110,10 @@ export default function OrderSummary({
     }
   };
 
-  // --- 4. SALVATAGGIO DB ---
-  const handleSaveConfiguration = async () => { /* Logica invariata */ };
+  const handleSendToCompany = async () => {
+     // TODO: Implementare salvataggio DB e invio mail.
+     alert("Questa funzione salverà la configurazione nel tuo archivio e invierà una richiesta ufficiale a Fiore Ebanisteria.");
+  };
 
   const PhotoBox = ({ src, label, isMain }) => (
     <div className={`photo-item ${isMain ? 'photo-main' : ''}`}>
@@ -136,13 +131,8 @@ export default function OrderSummary({
     </div>
   );
 
-  const price = "€ 2.450,00";
-
   return (
     <>
-      {/* =========================================
-          UI VISIBILE SUL SITO
-      ========================================= */}
       <div className="final-summary-section" id="order-summary" ref={summaryRef}>
         <div className="summary-left">
           <div className="photo-grid">
@@ -154,7 +144,7 @@ export default function OrderSummary({
 
         <div className="summary-right">
           <div className="summary-header">
-            <span className="summary-eyebrow">Codice: {configCode}</span>
+            <span className="summary-eyebrow">Codice Rif: {configCode}</span>
             <h2 className="brand-title">Nordic 01</h2>
           </div>
 
@@ -165,61 +155,54 @@ export default function OrderSummary({
             <li><span className="summary-label">Tipologia</span><span className="summary-value">Standard</span></li>
           </ul>
 
-          <div className="total-price-box">
-            <span className="price-label">Stima indicativa</span>
-            <span className="price-value">{price}</span>
+          <div className="info-box-no-price">
+            <p>Salva questa configurazione per archiviarla nel tuo profilo e inviare la richiesta di quotazione ufficiale a Fiore Ebanisteria.</p>
           </div>
 
           <div className="summary-actions" data-html2canvas-ignore="true">
             <button className="action-btn btn-secondary" onClick={handleDownloadPDF} disabled={isGeneratingPdf || !screenshots.external || isCapturing}>
               {isGeneratingPdf ? <div className="spinner spinner-sm"></div> : <><TbDownload size={20} />Scarica PDF</>}
             </button>
-            <button className="action-btn btn-primary" onClick={handleSaveConfiguration} disabled={isSaving}>
-              <TbCheck size={20} /> Richiedi Preventivo
+            <button className="action-btn btn-primary" onClick={handleSendToCompany} disabled={isSaving}>
+              <TbSend size={20} /> Invia all'Azienda
             </button>
           </div>
         </div>
       </div>
 
-      {/* =========================================
-          TEMPLATE PDF NASCOSTO (A4 Sizing)
-      ========================================= */}
+      {/* TEMPLATE PDF NASCOSTO */}
       <div className="pdf-export-container">
-        
-        {/* PAGINA 1: Copertina e Vista Esterna */}
         <div className="pdf-page" ref={pdfPage1Ref}>
           <div className="pdf-header">
             <img src="/assets/logo_fiore_ebanisteria.png" alt="Logo" className="pdf-logo" />
-            <div className="pdf-code">Codice Configurazione: <strong>{configCode}</strong></div>
+            <div className="pdf-code">Rif. Configurazione: <strong>{configCode}</strong></div>
           </div>
           
           <div className="pdf-hero">
-            <h1 className="pdf-title">La tua configurazione di Nordic 01</h1>
+            <h1 className="pdf-title">Dettaglio Configurazione Nordic 01</h1>
             {screenshots.external && <img src={screenshots.external} alt="Esterno" className="pdf-hero-img" />}
           </div>
 
           <div className="pdf-summary-table">
             <div className="pdf-table-row pdf-table-header">
-              <span>Riepilogo Costi</span>
-              <span>Prezzo*</span>
+              <span>Specifiche Principali</span>
             </div>
             <div className="pdf-table-row">
-              <span>Modello Base Nordic 01</span>
-              <span>€ 2.000,00</span>
+              <span>Modello Scelto</span>
+              <span>Nordic 01</span>
             </div>
             <div className="pdf-table-row">
-              <span>Optional & Finiture</span>
-              <span>€ 450,00</span>
+              <span>Finitura Esterna</span>
+              <span>{extFinish?.label || 'Non selezionato'} ({extFinish?.category})</span>
             </div>
-            <div className="pdf-table-row pdf-total-row">
-              <span>Prezzo Totale Stima</span>
-              <span>{price}</span>
+             <div className="pdf-table-row">
+              <span>Finitura Interna</span>
+              <span>{intFinish?.label || 'Non selezionato'} ({intFinish?.category})</span>
             </div>
-            <p className="pdf-disclaimer">*IVA Inclusa. Le immagini visualizzate potrebbero non corrispondere completamente alla configurazione finale.</p>
+            <p className="pdf-disclaimer">Documento generato automaticamente. Le immagini visualizzate potrebbero differire leggermente dalla resa finale dei materiali.</p>
           </div>
         </div>
 
-        {/* PAGINA 2: Dettagli e Viste Interne */}
         <div className="pdf-page" ref={pdfPage2Ref}>
           <div className="pdf-header">
             <img src="/assets/logo_fiore_ebanisteria.png" alt="Logo" className="pdf-logo" />
@@ -238,31 +221,26 @@ export default function OrderSummary({
             </div>
           </div>
 
-          <h2 className="pdf-section-title" style={{marginTop: '40px'}}>Specifiche Tecniche</h2>
+          <h2 className="pdf-section-title" style={{marginTop: '40px'}}>Accessori e Struttura</h2>
           <div className="pdf-specs-table">
             <div className="pdf-spec-row">
-              <span className="pdf-spec-cat">Esterno</span>
-              <span className="pdf-spec-val">{extFinish?.label || 'Non selezionato'} ({extFinish?.category})</span>
-            </div>
-            <div className="pdf-spec-row">
-              <span className="pdf-spec-cat">Interno</span>
-              <span className="pdf-spec-val">{intFinish?.label || 'Non selezionato'} ({intFinish?.category})</span>
-            </div>
-            <div className="pdf-spec-row">
-              <span className="pdf-spec-cat">Apertura</span>
+              <span className="pdf-spec-cat">Senso di Apertura</span>
               <span className="pdf-spec-val">Spinta a Destra</span>
             </div>
             <div className="pdf-spec-row">
               <span className="pdf-spec-cat">Tipologia Costruttiva</span>
               <span className="pdf-spec-val">Standard - Singola Anta</span>
             </div>
+            <div className="pdf-spec-row">
+              <span className="pdf-spec-cat">Soglia Fissa</span>
+              <span className="pdf-spec-val">Sì</span>
+            </div>
           </div>
           
           <div className="pdf-footer">
-            <p>Fiore Ebanisteria - Documento generato automaticamente il {new Date().toLocaleDateString('it-IT')}</p>
+            <p>Fiore Ebanisteria - Portale Rivenditori B2B | {new Date().toLocaleDateString('it-IT')}</p>
           </div>
         </div>
-
       </div>
     </>
   );
