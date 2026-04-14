@@ -1,3 +1,5 @@
+/* src/styles/AuthModal.css */
+
 /* --- OVERLAY MODALE --- */
 .auth-modal-overlay {
   position: fixed;
@@ -26,33 +28,90 @@
   position: relative;
   box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.2);
   font-family: var(--font-primary);
-  max-height: 90vh;
-  overflow-y: auto;
+  
+  /* GESTIONE ALTEZZE E SCROLL DINAMICO */
+  max-height: 90vh; /* Il modale non supera mai il 90% dello schermo */
+  overflow-y: auto;  /* Appare lo scroll solo se il contenuto sfora */
+  overflow-x: hidden;
+  
+  /* Stile scrollbar per Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--col-white-3) transparent;
 }
 
-/* --- BOTTONE CHIUSURA --- */
+/* --- STILIZZAZIONE SCROLLBAR (Chrome, Safari, Edge) --- */
+.auth-modal-content::-webkit-scrollbar {
+  width: 6px; /* Molto sottile */
+}
+
+.auth-modal-content::-webkit-scrollbar-track {
+  background: transparent; /* Sfondo trasparente */
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb {
+  background-color: var(--col-white-3); 
+  border-radius: 10px;
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--col-black-2);
+}
+
+/* --- BOTTONE CHIUSURA (X) --- */
 .auth-close-btn {
   position: absolute;
   top: 20px;
   right: 20px;
   background-color: transparent;
-  border-style: none;
+  border: none;
   cursor: pointer;
   color: var(--col-black-2);
-  transition-property: color;
-  transition-duration: 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px;
+  border-radius: 6px; /* Quadrato arrotondato */
 }
 
 .auth-close-btn:hover {
+  background-color: var(--col-white-3);
   color: var(--col-black-3);
+}
+
+/* --- FRECCIA INDIETRO --- */
+.back-arrow-btn {
+  background: transparent;
+  border: none;
+  color: var(--col-black-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 15px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.back-arrow-btn:hover {
+  transform: translateX(-3px);
+  color: var(--col-gold);
 }
 
 /* --- INTESTAZIONE --- */
 .auth-header {
   margin-bottom: 24px;
+}
+
+/* Forziamo la riduzione del titolo per sovrascrivere App.css */
+.auth-header .brand-title {
+  font-size: 2rem !important; 
+  font-weight: 700;
+  color: var(--col-black-3);
+  margin-bottom: 8px;
+  margin-top: 0;
 }
 
 .auth-subtitle {
@@ -63,40 +122,9 @@
   margin-bottom: 0;
 }
 
-/* --- TABS (ACCEDI / REGISTRATI) --- */
+/* Nascondiamo i vecchi tab se usiamo i link in basso */
 .auth-tabs {
-  display: flex;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--col-white-3);
-  margin-bottom: 24px;
-}
-
-.auth-tab {
-  flex-grow: 1;
-  background-color: transparent;
-  border-style: none;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  font-family: var(--font-primary);
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--col-black-2);
-  cursor: pointer;
-  border-bottom-width: 2px;
-  border-bottom-style: solid;
-  border-bottom-color: transparent;
-  transition-property: all;
-  transition-duration: 0.2s;
-}
-
-.auth-tab.active {
-  color: var(--col-gold);
-  border-bottom-color: var(--col-gold);
-}
-
-.auth-tab:hover:not(.active) {
-  color: var(--col-black-3);
+  display: none; 
 }
 
 /* --- FORM INPUTS --- */
@@ -198,34 +226,151 @@
   font-weight: 600;
 }
 
-/* --- MESSAGGI DI ERRORE / SUCCESSO --- */
+/* --- MESSAGGI DI ERRORE / SUCCESSO (Coerenti col Brand) --- */
 .auth-message {
   margin-top: 16px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  padding-left: 12px;
-  padding-right: 12px;
+  padding: 14px 16px;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  text-align: center;
+  text-align: left;
   line-height: 1.4;
 }
 
+/* Errore: Sfondo scuro antracite, testo bianco, accento oro. Molto visibile. */
 .auth-message.error {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #fca5a5;
+  background-color: var(--col-white-1);
+  color: var(--col-black-1);
+  border: 1px solid var(--col-gold);
+  border-left: 5px solid var(--col-gold);
 }
 
+/* Successo: Sfondo chiaro, accento oro e leggero bagliore dorato */
 .auth-message.success {
-  background-color: #dcfce7;
-  color: #166534;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #86efac;
+  background-color: var(--col-white-1);
+  color: var(--col-black-1);
+  border: 1px solid var(--col-gold);
+  border-left: 5px solid var(--col-gold);
+  box-shadow: 0 4px 15px rgba(189, 155, 77, 0.15); /* Ombra con il colore gold (#bd9b4d) */
+}
+
+/* =========================================================================
+   NUOVI STILI B2B WIZARD (AGGIUNTI PER IL MULTI-STEP E SICUREZZA)
+========================================================================= */
+
+/* --- MULTI-STEP & ANIMATIONS --- */
+.step-container {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- ASTERISCO OBBLIGATORIO --- */
+.req-ast {
+  color: var(--col-gold);
+  font-size: 1.2rem;
+  line-height: 0;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+/* --- PASSWORD INPUT CON OCCHIETTO --- */
+.pwd-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.pwd-input-wrapper input {
+  width: 100%;
+  padding-right: 45px; /* Spazio per l'icona */
+  box-sizing: border-box;
+}
+
+.pwd-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--col-black-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.pwd-toggle-btn:hover {
+  color: var(--col-gold);
+}
+
+/* --- HINT SICUREZZA PASSWORD --- */
+.pwd-hint {
+  font-size: 0.72rem;
+  color: var(--col-black-2);
+  margin-top: 6px;
+  display: block;
+  opacity: 0.8;
+}
+
+/* --- LINKS E NAVIGAZIONE BOTTOM --- */
+.forgot-pwd-row {
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
+
+.text-link {
+  color: var(--col-black-2);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  color: var(--col-gold);
+}
+
+/* Variante per i link con underline */
+.text-link.underline {
+  text-decoration: underline;
+  color: var(--col-black-3);
+  transition: color 0.2s ease;
+}
+
+.text-link.underline:hover {
+  color: var(--col-gold);
+}
+
+.auth-footer-actions {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.full-width {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-switch-links {
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: var(--col-black-2);
+}
+
+/* --- RECAPTCHA A SINISTRA --- */
+.recaptcha-wrapper-left {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  transform: scale(0.95);
+  transform-origin: left center;
 }
 
 /* --- RESPONSIVE --- */

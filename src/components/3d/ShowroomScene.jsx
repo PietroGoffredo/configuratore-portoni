@@ -52,55 +52,105 @@ function Finestre() {
   const dx = useGLTF('/models/showroom/finestra_dx.glb');
   const sx = useGLTF('/models/showroom/finestra_sx.glb');
   
-  const shadowMap = useTexture('/textures/showroom/finestre/AO_Finestra_Dx.png');
+  const shadowMaps = useTexture({
+    dx: '/textures/showroom/finestre/AO_Finestra_Dx.png',
+    sx: '/textures/showroom/finestre/AO_Finestra_Sx.png'
+  });
 
   useLayoutEffect(() => {
-    shadowMap.colorSpace = THREE.NoColorSpace; 
-    shadowMap.flipY = false;
-    shadowMap.channel = 1; 
+    Object.values(shadowMaps).forEach(map => {
+      map.colorSpace = THREE.NoColorSpace; 
+      map.flipY = false;
+      map.channel = 1; 
+    });
 
-    [dx.scene, sx.scene].forEach((scene) => {
+    [dx.scene, sx.scene].forEach((scene, index) => {
+      const currentMap = index === 0 ? shadowMaps.dx : shadowMaps.sx;
+
       scene.traverse((child) => {
         if (child.isMesh) {
+          const meshName = child.name.toLowerCase();
+
+          if (meshName.includes('vetro') || meshName.includes('glass')) {
+            child.material = new THREE.MeshPhysicalMaterial({
+              color: new THREE.Color('#000000'), 
+              metalness: 0, 
+              roughness: 0,           
+              transparent: true, 
+              opacity: 0.35,          
+              reflectivity: 0.3,      
+              clearcoat: 1.0,         
+              clearcoatRoughness: 0,  
+              envMapIntensity: 1.5    
+            });
+          } 
+          else {
+            const geom = child.geometry.clone();
+            const targetUV = geom.attributes.uv1 || geom.attributes.uv;
+            if (targetUV) geom.setAttribute('uv2', targetUV);
+            child.geometry = geom;
+
+            const newMat = child.material.clone();
+            newMat.lightMap = null;
+            newMat.aoMap = currentMap;    
+            newMat.aoMapIntensity = 1.2; 
+            newMat.envMapIntensity = 1.0;
+            newMat.needsUpdate = true;
+            child.material = newMat;
+          }
+        }
+      });
+    });
+  }, [dx, sx, shadowMaps]);
+
+  return (
+    <group>
+      <primitive object={dx.scene} />
+      <primitive object={sx.scene} />
+    </group>
+  );
+}
+
+// === COMPONENTE TENDE ===
+function Tende() {
+  const dx = useGLTF('/models/showroom/tenda_dx.glb');
+  const sx = useGLTF('/models/showroom/tenda_sx.glb');
+  
+  const shadowMaps = useTexture({
+    dx: '/textures/showroom/finestre/Ombra_Tenda_Dx.png',
+    sx: '/textures/showroom/finestre/Ombra_Tenda_Sx.png'
+  });
+
+  useLayoutEffect(() => {
+    Object.values(shadowMaps).forEach(map => {
+      map.colorSpace = THREE.NoColorSpace; 
+      map.flipY = false;
+      map.channel = 1;
+    });
+
+    [dx.scene, sx.scene].forEach((scene, index) => {
+      const currentMap = index === 0 ? shadowMaps.dx : shadowMaps.sx;
+
+      scene.traverse((child) => {
+        if (child.isMesh && child.material) {
           const geom = child.geometry.clone();
           const targetUV = geom.attributes.uv1 || geom.attributes.uv;
-          if (targetUV) {
-            geom.setAttribute('uv2', targetUV);
-          }
+          if (targetUV) geom.setAttribute('uv2', targetUV);
           child.geometry = geom;
 
           const originalMaterials = Array.isArray(child.material) ? child.material : [child.material];
-          
           const newMaterials = originalMaterials.map(mat => {
-            const matName = mat.name.toLowerCase();
-            
-            if (matName.includes('glass') || matName.includes('vetro')) {
-              return new THREE.MeshPhysicalMaterial({
-                color: new THREE.Color('#000000'), 
-                metalness: 0, 
-                roughness: 0, 
-                transparent: true, 
-                opacity: 0.35,          
-                reflectivity: 0.5,
-                clearcoat: 1,           
-                clearcoatRoughness: 0,  
-                envMapIntensity: 1.5
-              });
-            } else {
-              const newMat = mat.clone(); 
-              newMat.aoMap = shadowMap;    
-              newMat.aoMapIntensity = 1.5; 
-              newMat.envMapIntensity = 1.0;   
-              newMat.needsUpdate = true;
-              return newMat;
-            }
+            const newMat = mat.clone();
+            newMat.side = THREE.DoubleSide; 
+            newMat.aoMap = currentMap;    
+            newMat.aoMapIntensity = 1.1; 
+            return newMat;
           });
-
           child.material = Array.isArray(child.material) ? newMaterials : newMaterials[0];
         }
       });
     });
-  }, [dx, sx, shadowMap]);
+  }, [dx, sx, shadowMaps]);
 
   return (
     <group>
@@ -110,61 +160,7 @@ function Finestre() {
   );
 }
 
-// === COMPONENTE TENDE (Uniformato alla logica Finestre) ===
-function Tende() {
-  const dx = useGLTF('/models/showroom/tenda_dx.glb');
-  const sx = useGLTF('/models/showroom/tenda_sx.glb');
-
-  const shadowMapTendaDx = useTexture('/textures/showroom/finestre/Ombra_Tenda_Dx.png');
-
-  useLayoutEffect(() => {
-    // 1. Spazio colore lineare per evitare l'annerimento totale
-    shadowMapTendaDx.colorSpace = THREE.NoColorSpace; 
-    shadowMapTendaDx.flipY = false;
-    shadowMapTendaDx.channel = 1;
-
-    // --- LOGICA TENDA DESTRA (Con Ombra Bake) ---
-    dx.scene.traverse((child) => {
-      if (child.isMesh && child.material) {
-        // 2. Clonazione Geometria e iniezione uv2
-        const geom = child.geometry.clone();
-        const targetUV = geom.attributes.uv1 || geom.attributes.uv;
-        if (targetUV) geom.setAttribute('uv2', targetUV);
-        child.geometry = geom;
-
-        // 3. Clonazione Materiali e applicazione aoMap (uguale a finestre)
-        const originalMaterials = Array.isArray(child.material) ? child.material : [child.material];
-        const newMaterials = originalMaterials.map(mat => {
-          const newMat = mat.clone(); 
-          newMat.side = THREE.DoubleSide; 
-          newMat.aoMap = shadowMapTendaDx;    
-          newMat.aoMapIntensity = 2.0; // Uniformato a finestra
-          newMat.envMapIntensity = 1.0; // Mantiene la luminosità originale del tessuto
-          newMat.needsUpdate = true;
-          return newMat;
-        });
-        child.material = Array.isArray(child.material) ? newMaterials : newMaterials[0];
-      }
-    });
-
-    // --- LOGICA TENDA SINISTRA (Standard) ---
-    sx.scene.traverse((child) => {
-      if (child.isMesh && child.material) {
-        child.material.side = THREE.DoubleSide;
-      }
-    });
-
-  }, [dx, sx, shadowMapTendaDx]);
-
-  return (
-    <group>
-      <primitive object={dx.scene} />
-      <primitive object={sx.scene} />
-    </group>
-  );
-}
-
-// --- COMPONENTE PIANTE ---
+// === COMPONENTE PIANTE (Niente Bake) ===
 function Piante() {
   const dx = useGLTF('/models/showroom/pianta_dx.glb');
   const sx = useGLTF('/models/showroom/pianta_sx.glb');
@@ -173,7 +169,26 @@ function Piante() {
     [dx.scene, sx.scene].forEach((scene) => {
       scene.traverse((child) => {
         if (child.isMesh && child.material) {
-          child.material.side = THREE.DoubleSide;
+          
+          // Funzione per applicare piccoli aggiustamenti ai materiali
+          const applyTweaks = (mat) => {
+            mat.side = THREE.DoubleSide;
+            const matName = mat.name.toLowerCase();
+            
+            // Limitiamo la riflessività delle foglie per evitare l'effetto finto
+            if (matName.includes('foglia') || matName.includes('leaf') || matName.includes('foglie')) {
+              mat.envMapIntensity = 0.3;
+            } else {
+              mat.envMapIntensity = 0.8; // Per il vaso
+            }
+          };
+
+          // Gestiamo sia il caso di materiale singolo che di array di materiali
+          if (Array.isArray(child.material)) {
+            child.material.forEach(applyTweaks);
+          } else {
+            applyTweaks(child.material);
+          }
         }
       });
     });
@@ -206,6 +221,7 @@ export function ShowroomScene({ viewMode, wallColor }) {
         <Tende />
         <Piante />
 
+        {/* Le ombre a terra rimangono quelle dei planes! */}
         <OmbraStatica modelPath={'/models/showroom/piano_ombra.glb'} urlTexture={'/textures/showroom/piante/ombra_dx.png'} />
         <OmbraStatica modelPath={'/models/showroom/piano_ombra_muro.glb'} urlTexture={'/textures/showroom/piante/ombra_dx_muro.png'} /> 
         <OmbraStatica modelPath={'/models/showroom/piano_ombra_sx.glb'} urlTexture={'/textures/showroom/piante/ombra_sx.png'} />

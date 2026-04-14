@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/Navbar.css';
 import AuthModal from './AuthModal'; 
-import { supabase } from '../../config/supabaseClient'; // Importiamo Supabase per controllare la sessione
+import { supabase } from '../../config/supabaseClient'; 
 
-export default function Navbar({ currentView, setCurrentView }) {
+export default function Navbar({ 
+  currentView, 
+  setCurrentView,
+  isAuthModalOpen, 
+  setIsAuthModalOpen,
+  externalMessage,
+  setExternalMessage 
+}) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null); 
-  
-  // --- STATI AUTENTICAZIONE ---
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState(null); 
 
-  // Controllo automatico della sessione Supabase all'avvio e ai cambiamenti
   useEffect(() => {
-    // Recupera la sessione iniziale
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
     });
 
-    // Ascolta i cambiamenti di stato (es. quando l'utente fa login dal modale o logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -40,25 +41,23 @@ export default function Navbar({ currentView, setCurrentView }) {
     setActiveDropdown(activeDropdown === section ? null : section);
   };
 
-  // --- HANDLER MODALE LOGIN ---
   const handleLoginClick = (e) => {
     e.preventDefault();
-    setIsAuthModalOpen(true);
-    setIsMobileMenuOpen(false); // Chiude il menu su mobile
+    if (setExternalMessage) setExternalMessage({ type: '', text: '' }); 
+    if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+    setIsMobileMenuOpen(false); 
   };
 
-  // --- HANDLER LOGOUT ---
   const handleLogout = async (e) => {
     e.preventDefault();
-    await supabase.auth.signOut(); // Esegue il logout effettivo dal server Supabase
+    await supabase.auth.signOut(); 
     setUser(null);
-    if (setCurrentView) setCurrentView('configurator'); // Riporta al configuratore se si era nella dashboard
+    if (setCurrentView) setCurrentView('configurator'); 
   };
 
   return (
     <>
       <nav className="navbar">
-        {/* 1. LOGO */}
         <div className="navbar-logo" onClick={() => {
             if (setCurrentView) setCurrentView('configurator');
             goTo('https://www.fiorebanisteria.com/');
@@ -66,7 +65,6 @@ export default function Navbar({ currentView, setCurrentView }) {
           <img src="/assets/logo_fiore_ebanisteria.png" alt="Fiore Ebanisteria" />
         </div>
 
-        {/* 2. HAMBURGER */}
         <button 
           className={`hamburger hamburger--vortex ${isMobileMenuOpen ? 'is-active' : ''}`} 
           type="button"
@@ -77,7 +75,6 @@ export default function Navbar({ currentView, setCurrentView }) {
           </span>
         </button>
 
-        {/* 3. MENU */}
         <ul className={`navbar-menu ${isMobileMenuOpen ? 'is-open' : ''}`}>
           
           <li className="nav-item">
@@ -88,7 +85,6 @@ export default function Navbar({ currentView, setCurrentView }) {
             <a href="https://www.fiorebanisteria.com/chi-siamo/" className="nav-link">Chi siamo</a>
           </li>
 
-          {/* MISSION */}
           <li className={`nav-item ${activeDropdown === 'mission' ? 'open' : ''}`} onClick={() => handleDropdownClick('mission')}>
             <span className="nav-link has-dropdown">Mission</span>
             <ul className="dropdown-menu">
@@ -104,7 +100,6 @@ export default function Navbar({ currentView, setCurrentView }) {
             </ul>
           </li>
 
-          {/* PORTE */}
           <li className={`nav-item ${activeDropdown === 'porte' ? 'open' : ''}`} onClick={() => handleDropdownClick('porte')}>
             <span className="nav-link has-dropdown">Porte</span>
             <ul className="dropdown-menu">
@@ -120,13 +115,9 @@ export default function Navbar({ currentView, setCurrentView }) {
             </ul>
           </li>
 
-          {/* ARREDAMENTO - SPLIT VIEW */}
           <li className={`nav-item ${activeDropdown === 'arredamento' ? 'open' : ''}`}>
             <div className="nav-link has-dropdown split-view">
-               <a 
-                 href="https://www.fiorebanisteria.com/arredamento/" 
-                 className="split-view-text"
-               >
+               <a href="https://www.fiorebanisteria.com/arredamento/" className="split-view-text">
                  Arredamento
                </a>
                <div 
@@ -155,7 +146,6 @@ export default function Navbar({ currentView, setCurrentView }) {
             <a href="https://www.fiorebanisteria.com/contatti/" className="nav-link">Contatti</a>
           </li>
 
-          {/* --- AREA RISERVATA (LOGIN / PROFILO) --- */}
           <li className={`nav-item ${activeDropdown === 'account' ? 'open' : ''}`} onClick={() => handleDropdownClick('account')}>
             {!user ? (
               <a 
@@ -172,7 +162,6 @@ export default function Navbar({ currentView, setCurrentView }) {
                   Il mio Profilo
                 </span>
                 <ul className="dropdown-menu">
-                  {/* Navigazione dinamica tra le viste */}
                   {currentView === 'configurator' ? (
                     <li className="dropdown-item">
                       <a href="#" className="dropdown-link" onClick={(e) => { e.preventDefault(); setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}>Le mie Configurazioni</a>
@@ -190,7 +179,6 @@ export default function Navbar({ currentView, setCurrentView }) {
             )}
           </li>
 
-          {/* LINGUA */}
           <li className={`nav-item ${activeDropdown === 'lang' ? 'open' : ''}`} onClick={() => handleDropdownClick('lang')}>
             <div className="nav-link has-dropdown">
               <img src="/assets/it.png" alt="IT" className="flag-icon" />
@@ -207,12 +195,14 @@ export default function Navbar({ currentView, setCurrentView }) {
         </ul>
       </nav>
 
-      {/* --- INCLUSIONE DEL MODALE --- */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        // onLoginSuccess non è più strettamente necessario perché stiamo ascoltando l'evento in useEffect, ma lo manteniamo per compatibilità e reattività immediata
+        onClose={() => {
+          if (setIsAuthModalOpen) setIsAuthModalOpen(false);
+          if (setExternalMessage) setExternalMessage({ type: '', text: '' }); 
+        }} 
         onLoginSuccess={(userData) => setUser(userData)}
+        externalMessage={externalMessage}
       />
     </>
   );

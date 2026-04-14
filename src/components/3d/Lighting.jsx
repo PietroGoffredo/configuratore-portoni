@@ -4,33 +4,26 @@ import { Environment } from '@react-three/drei';
 export default function Lighting() {
   return (
     <>
-      {/* Ambiente HDR per riflessi e rifrazioni del vetro */}
+      {/* Ambiente HDR: fornisce riflessi per vetri/metalli e luce diffusa */}
       <Environment 
         files="/textures/showroom/luce_studio.hdr" 
         background={false} 
-        environmentIntensity={0.7} 
+        environmentIntensity={0.8} // Leggermente alzato per far risaltare il telaio scuro
       />
       
-      {/* Luce emisferica per schiarire le ombre (Cielo/Terra) */}
+      {/* Luce emisferica: riempie le ombre. Colori tenui per non "bruciare" il baking */}
       <hemisphereLight 
-        skyColor="#b1d1ff" 
-        groundColor="#3d2b1f" 
-        intensity={0.5} 
-      />
-      
-      {/* Sole di Mezzogiorno: Caldo e zenitale */}
-      <directionalLight 
-        position={[2, 10, 4]} 
-        intensity={2.0} 
-        color="#fff1d0" 
-        castShadow={false} // Usiamo ombre baked per performance
-      />
-      
-      {/* Luce di rimbalzo fredda dall'atmosfera */}
-      <directionalLight 
-        position={[-5, 2, -2]} 
+        skyColor="#ffffff" 
+        groundColor="#e6e4df" 
         intensity={0.4} 
-        color="#d0e0ff" 
+      />
+      
+      {/* Sole: dà direzione e riflessi speculari (NIENTE OMBRE DINAMICHE) */}
+      <directionalLight 
+        position={[3, 8, 5]} 
+        intensity={1.2} 
+        color="#fff5e6" 
+        castShadow={false} // Fondamentale: ombre dinamiche disattivate
       />
     </>
   );
