@@ -49,11 +49,17 @@
   font-weight: 600;
   font-size: 0.95rem;
   z-index: 100000;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  /* Ombra in tinta col brand */
+  box-shadow: 0 10px 30px rgba(var(--col-brand-dark-rgb), 0.12);
   animation: slideInToast 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.global-notification svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 @keyframes slideInToast {
@@ -209,7 +215,8 @@
   border-radius: 8px;
   border: 1px solid var(--col-white-3);
   padding: 32px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  /* Ombra in tinta col brand */
+  box-shadow: 0 4px 20px rgba(var(--col-brand-dark-rgb), 0.04);
 }
 
 .card-title {
@@ -405,7 +412,8 @@
 
 .document-row:hover {
   border-color: var(--col-gold);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  /* Ombra in tinta col brand */
+  box-shadow: 0 4px 15px rgba(var(--col-brand-dark-rgb), 0.05);
 }
 
 .doc-icon {
@@ -595,7 +603,7 @@
   border-color: var(--col-gold);
   background-color: var(--col-white-1);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(189, 155, 77, 0.1);
+  box-shadow: 0 0 0 3px rgba(189, 155, 77, 0.15); /* Ombra oro al focus per visibilità */
 }
 
 .disabled-group input {
@@ -729,7 +737,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.75);
+  /* Overlay in tinta col brand scuro */
+  background-color: rgba(var(--col-brand-dark-rgb), 0.85);
   backdrop-filter: blur(4px);
   z-index: 100000;
   display: flex;
@@ -746,7 +755,8 @@
   border-radius: 12px;
   padding: 40px;
   position: relative;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  /* Ombra profonda in tinta col brand */
+  box-shadow: 0 25px 50px -12px rgba(var(--col-brand-dark-rgb), 0.3);
   text-align: center;
 }
 

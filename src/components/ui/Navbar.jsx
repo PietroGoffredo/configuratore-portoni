@@ -1,11 +1,11 @@
+// src/components/ui/Navbar.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/Navbar.css';
 import AuthModal from './AuthModal'; 
 import { supabase } from '../../config/supabaseClient'; 
 
 export default function Navbar({ 
-  currentView, 
-  setCurrentView,
   isAuthModalOpen, 
   setIsAuthModalOpen,
   externalMessage,
@@ -14,6 +14,9 @@ export default function Navbar({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null); 
   const [user, setUser] = useState(null); 
+  
+  const navigate = useNavigate();
+  const location = useLocation(); 
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,10 +29,6 @@ export default function Navbar({
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const goTo = (url) => {
-    window.location.href = url;
-  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -52,16 +51,14 @@ export default function Navbar({
     e.preventDefault();
     await supabase.auth.signOut(); 
     setUser(null);
-    if (setCurrentView) setCurrentView('configurator'); 
+    navigate('/'); 
   };
 
   return (
     <>
       <nav className="navbar">
-        <div className="navbar-logo" onClick={() => {
-            if (setCurrentView) setCurrentView('configurator');
-            goTo('https://www.fiorebanisteria.com/');
-        }}>
+        {/* LOGO: Porta sempre alla Landing Page (Home) */}
+        <div className="navbar-logo" onClick={() => navigate('/')}>
           <img src="/assets/logo_fiore_ebanisteria.png" alt="Fiore Ebanisteria" />
         </div>
 
@@ -78,7 +75,8 @@ export default function Navbar({
         <ul className={`navbar-menu ${isMobileMenuOpen ? 'is-open' : ''}`}>
           
           <li className="nav-item">
-            <a href="https://www.fiorebanisteria.com/" className="nav-link">Home</a>
+            {/* Navighiamo verso la nostra nuova HomeView */}
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); setIsMobileMenuOpen(false); }} className="nav-link">Home</a>
           </li>
 
           <li className="nav-item">
@@ -88,53 +86,29 @@ export default function Navbar({
           <li className={`nav-item ${activeDropdown === 'mission' ? 'open' : ''}`} onClick={() => handleDropdownClick('mission')}>
             <span className="nav-link has-dropdown">Mission</span>
             <ul className="dropdown-menu">
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/artigianalita/" className="dropdown-link">Artigianalità</a>
-              </li>
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/artigianalita/#creativita" className="dropdown-link">Creatività</a>
-              </li>
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/tecnologia-ed-ingegnerizzazione/" className="dropdown-link">Ricerca e sviluppo</a>
-              </li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/artigianalita/" className="dropdown-link">Artigianalità</a></li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/artigianalita/#creativita" className="dropdown-link">Creatività</a></li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/tecnologia-ed-ingegnerizzazione/" className="dropdown-link">Ricerca e sviluppo</a></li>
             </ul>
           </li>
 
           <li className={`nav-item ${activeDropdown === 'porte' ? 'open' : ''}`} onClick={() => handleDropdownClick('porte')}>
             <span className="nav-link has-dropdown">Porte</span>
             <ul className="dropdown-menu">
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/progetti-realizzati/" className="dropdown-link">Progetti personalizzati</a>
-              </li>
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/collezioni-porte/" className="dropdown-link">Rivestimenti</a>
-              </li>
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/cataloghi/" className="dropdown-link">Cataloghi</a>
-              </li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/progetti-realizzati/" className="dropdown-link">Progetti personalizzati</a></li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/collezioni-porte/" className="dropdown-link">Rivestimenti</a></li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/cataloghi/" className="dropdown-link">Cataloghi</a></li>
             </ul>
           </li>
 
           <li className={`nav-item ${activeDropdown === 'arredamento' ? 'open' : ''}`}>
             <div className="nav-link has-dropdown split-view">
-               <a href="https://www.fiorebanisteria.com/arredamento/" className="split-view-text">
-                 Arredamento
-               </a>
-               <div 
-                  className="arrow-toggle" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDropdownClick('arredamento');
-                  }}
-               ></div>
+               <a href="https://www.fiorebanisteria.com/arredamento/" className="split-view-text">Arredamento</a>
+               <div className="arrow-toggle" onClick={(e) => { e.stopPropagation(); handleDropdownClick('arredamento'); }}></div>
             </div>
             <ul className="dropdown-menu">
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/arredo-bagno/" className="dropdown-link">Arredo bagno</a>
-              </li>
-              <li className="dropdown-item">
-                <a href="https://www.fiorebanisteria.com/arredamenti-custom/" className="dropdown-link">Arredamenti custom</a>
-              </li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/arredo-bagno/" className="dropdown-link">Arredo bagno</a></li>
+              <li className="dropdown-item"><a href="https://www.fiorebanisteria.com/arredamenti-custom/" className="dropdown-link">Arredamenti custom</a></li>
             </ul>
           </li>
 
@@ -159,16 +133,17 @@ export default function Navbar({
             ) : (
               <>
                 <span className="nav-link has-dropdown" style={{ fontWeight: 'bold', color: 'var(--col-gold)' }}>
-                  Il mio Profilo
+                  Il mio profilo
                 </span>
                 <ul className="dropdown-menu">
-                  {currentView === 'configurator' ? (
+                  {/* Link dinamici in base all'URL in cui ci si trova */}
+                  {location.pathname === '/dashboard' ? (
                     <li className="dropdown-item">
-                      <a href="#" className="dropdown-link" onClick={(e) => { e.preventDefault(); setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}>Le mie Configurazioni</a>
+                      <a href="#" className="dropdown-link" onClick={(e) => { e.preventDefault(); navigate('/configuratore'); setIsMobileMenuOpen(false); }}>Nuovo preventivo</a>
                     </li>
                   ) : (
                     <li className="dropdown-item">
-                      <a href="#" className="dropdown-link" onClick={(e) => { e.preventDefault(); setCurrentView('configurator'); setIsMobileMenuOpen(false); }}>Nuovo Preventivo</a>
+                      <a href="#" className="dropdown-link" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); setIsMobileMenuOpen(false); }}>Le mie configurazioni</a>
                     </li>
                   )}
                   <li className="dropdown-item">

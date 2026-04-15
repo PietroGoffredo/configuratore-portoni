@@ -1,10 +1,11 @@
+// src/components/ui/AuthModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { TbX, TbEye, TbEyeOff, TbArrowLeft } from "react-icons/tb";
+import { TbX, TbEye, TbEyeOff, TbArrowLeft, TbCheck, TbAlertTriangle, TbInfoCircle } from "react-icons/tb";
 import ReCAPTCHA from "react-google-recaptcha";
 import { supabase } from '../../config/supabaseClient'; 
 import '../../styles/AuthModal.css';
 
-// --- VALIDAZIONE CAMPI ---
+// --- REGOLE DI VALIDAZIONE ---
 const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validatePhone = (phone) => /^(\+39|0039)?\s?3\d{2}\s?\d{6,7}$|^0\d{1,3}\s?\d{5,7}$/.test(phone.replace(/\s/g, ''));
 const validateCAP = (cap) => /^\d{5}$/.test(cap);
@@ -65,9 +66,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, externalMes
   // =========================================================================
   const handleSecureClose = async (e) => {
     if (e) e.stopPropagation();
-    // Se l'utente chiude il modale o clicca fuori mentre è in "update_password",
-    // significa che ha la sessione temporanea di Supabase ma ha abortito il reset.
-    // DISTRUGGIAMO LA SESSIONE per non fargli bypassare il login.
     if (authMode === 'update_password') {
       await supabase.auth.signOut();
     }
@@ -77,7 +75,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, externalMes
   const handleSecureBackBtn = async (e) => {
     e.preventDefault();
     if (authMode === 'update_password') {
-      // Stessa logica di sicurezza se preme "Torna Indietro"
       await supabase.auth.signOut();
       changeAuthMode('login');
     } else if (authMode === 'register' && regStep === 2) {
@@ -183,9 +180,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, externalMes
         const { error } = await supabase.auth.updateUser({ password: password });
         if (error) throw error;
 
-        // === SICUREZZA POST-AGGIORNAMENTO ===
-        // Disconnettiamo immediatamente l'utente in modo che sia costretto
-        // a fare un vero login con la nuova password appena impostata.
         await supabase.auth.signOut();
 
         setMessage({ type: 'success', text: 'Password aggiornata con successo! Ora puoi accedere.' });
@@ -302,7 +296,15 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, externalMes
             </>
           )}
 
-          {message.text && <div className={`auth-message ${message.type}`}>{message.text}</div>}
+          {/* BANNER MESSAGGI AGGIORNATO */}
+          {message.text && (
+            <div className={`auth-status-message ${message.type}`}>
+              {message.type === 'success' && <TbCheck size={18} />}
+              {message.type === 'error' && <TbAlertTriangle size={18} />}
+              {message.type === 'info' && <TbInfoCircle size={18} />}
+              <span>{message.text}</span>
+            </div>
+          )}
 
           <div className="auth-footer-actions">
             <button type="submit" className="action-btn btn-primary full-width" disabled={loading}>

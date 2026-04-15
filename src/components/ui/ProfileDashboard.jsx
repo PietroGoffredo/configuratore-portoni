@@ -1,5 +1,6 @@
 // src/components/ui/ProfileDashboard.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../config/supabaseClient';
 import { jsPDF } from 'jspdf';
 import { 
@@ -18,25 +19,40 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // --- STATO PER LA CONFERMA DI ELIMINAZIONE ---
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  const navigate = useNavigate();
 
   // --- STATI DI NAVIGAZIONE CON ANIMAZIONI ---
-  // Fasi possibili: 'dashboard-enter' | 'dashboard-leave' | 'settings-enter' | 'settings-leave'
   const [viewPhase, setViewPhase] = useState('dashboard-enter'); 
   
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState(null); 
   const [notification, setNotification] = useState(null);
 
-  // --- STATI FORM MODIFICA ---
+  // --- STATI FORM MODIFICA & ELIMINAZIONE ---
   const [editData, setEditData] = useState({
     first_name: '', last_name: '', company_name: '', phone: '', postal_code: ''
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
 
   useEffect(() => {
     fetchUserDataAndDocuments();
   }, []);
+
+  // --- EFFETTO PER REINDIRIZZAMENTO POST-ELIMINAZIONE ---
+  useEffect(() => {
+    if (isDeleted) {
+      const timer = setTimeout(() => {
+        window.location.href = "https://www.fiorebanisteria.com/";
+      }, 3500); // Attende 3.5 secondi per mostrare il messaggio, poi reindirizza
+      return () => clearTimeout(timer);
+    }
+  }, [isDeleted]);
 
   const showNotification = (type, text) => {
     setNotification({ type, text });
@@ -55,7 +71,7 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
       }
       
       setUser(user);
-      resetEditForm(user); // Inizializza i dati form con i dati reali
+      resetEditForm(user);
 
       const { data: configs, error: dbError } = await supabase
         .from('configurations')
@@ -75,9 +91,10 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     if (onLogout) onLogout();
+    navigate('/');
   };
 
-  // --- LOGICA TRANSIZIONI E RESET (Indipendenza delle schermate) ---
+  // --- LOGICA TRANSIZIONI E RESET ---
   const resetEditForm = (currentUser) => {
     if (!currentUser) return;
     setEditData({
@@ -91,17 +108,17 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
   };
 
   const handleOpenSettings = () => {
-    setViewPhase('dashboard-leave'); // Lancia l'animazione di uscita
+    setViewPhase('dashboard-leave'); 
     setTimeout(() => {
-      resetEditForm(user); // Pulisce i dati "sporchi"
-      setViewPhase('settings-enter'); // Lancia l'animazione in entrata delle impostazioni
-    }, 250); // 250ms corrisponde alla durata dell'animazione CSS
+      resetEditForm(user); 
+      setViewPhase('settings-enter'); 
+    }, 250); 
   };
 
   const handleCloseSettings = () => {
-    setViewPhase('settings-leave'); // Animazione uscita impostazioni
+    setViewPhase('settings-leave'); 
     setTimeout(() => {
-      setViewPhase('dashboard-enter'); // Animazione rientro dashboard
+      setViewPhase('dashboard-enter'); 
     }, 250);
   };
 
@@ -213,10 +230,54 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
     }
   };
 
-  const confirmAccountDeletion = () => {
-    setIsDeleteModalOpen(false);
-    window.location.href = `mailto:info@fiorebanisteria.com?subject=Richiesta Chiusura Account&body=Con la presente richiedo la chiusura definitiva del mio account aziendale associato all'email: ${user.email}. Sono consapevole della perdita di tutti i preventivi archiviati.`;
+  // --- LOGICA ELIMINAZIONE ACCOUNT DEFINITIVA ---
+  const confirmAccountDeletion = async () => {
+    try {
+      setIsDeletingAccount(true);
+
+      // 1. Facciamo pulizia: Eliminiamo prima tutte le configurazioni dell'utente
+      const configIds = documents.map(doc => doc.id);
+      if (configIds.length > 0) {
+        const { error: configsError } = await supabase.from('configurations').delete().in('id', configIds);
+        if (configsError) throw configsError;
+      }
+
+      // 2. Chiamiamo la funzione RPC di Supabase per eliminare l'account Auth
+      const { error: rpcError } = await supabase.rpc('delete_user');
+      if (rpcError) throw rpcError;
+
+      // 3. Chiudiamo la sessione locale 
+      await supabase.auth.signOut();
+      
+      // 4. Chiudiamo il modale e attiviamo la schermata di successo (isDeleted)
+      setIsDeleteModalOpen(false);
+      setIsDeleted(true);
+
+    } catch (err) {
+      console.error("Errore durante l'eliminazione dell'account:", err);
+      showNotification("error", "Si è verificato un errore durante l'eliminazione dell'account. Riprova più tardi.");
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
+
+  // --- SCHERMATA DI SUCCESSO ELIMINAZIONE ---
+  if (isDeleted) {
+    return (
+      <div className="dashboard-container center-state">
+        <div style={{ color: 'var(--col-gold)', marginBottom: '24px' }}>
+          <TbCheck size={80} />
+        </div>
+        <h2 className="brand-title" style={{ fontSize: '2.4rem', marginBottom: '16px' }}>Account eliminato</h2>
+        <p style={{ maxWidth: '500px', margin: '0 auto', color: 'var(--col-black-2)', fontSize: '1.1rem', lineHeight: '1.6' }}>
+          Tutti i tuoi dati aziendali e lo storico delle configurazioni sono stati rimossi in conformità alle normative sulla privacy. Grazie per aver utilizzato i nostri servizi.
+        </p>
+        <p style={{ marginTop: '30px', color: 'var(--col-gold)', fontWeight: '600', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Reindirizzamento al sito principale in corso...
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -232,7 +293,7 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
       <div className="dashboard-container center-state unauth-state">
         <TbLock size={64} className="unauth-icon" />
         <h2 className="brand-title">Area riservata</h2>
-        <p>Effettua il login per accedere al tuo archivio preventivi e ai dati aziendali.</p>
+        <p>Effettua il login per accedere al tuo archivio configurazioni e ai dati aziendali.</p>
       </div>
     );
   }
@@ -311,7 +372,7 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
                   <div className="empty-icon-wrapper"><TbFileText size={48} /></div>
                   <h4>Nessuna configurazione salvata</h4>
                   <p>Non hai ancora salvato nulla nel tuo archivio.</p>
-                  <button className="btn-new-config" onClick={() => { if(onNewConfig) onNewConfig(); else window.location.reload(); }}>
+                  <button className="btn-new-config" onClick={() => navigate('/') }>
                     <TbPlus size={18} /> Nuova configurazione
                   </button>
                 </div>
@@ -415,7 +476,7 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
               <div className="action-block">
                 <div className="action-info">
                   <h4>Esporta i tuoi dati</h4>
-                  <p>Scarica una copia PDF con i dati del tuo account e dello storico delle configurazioni.</p>
+                  <p>Scarica una copia PDF con i dati del tuo account e dello storico delle configurazioni salvate.</p>
                 </div>
                 <button className="btn-secondary-outline" onClick={handleExportDataPDF}>
                   <TbDownload size={18} /> Scarica dati
@@ -439,9 +500,9 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
 
       {/* --- MODALE ELIMINAZIONE ACCOUNT --- */}
       {isDeleteModalOpen && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-content">
-            <button className="modal-close-btn" onClick={() => setIsDeleteModalOpen(false)}><TbX size={24} /></button>
+        <div className="custom-modal-overlay" onClick={() => !isDeletingAccount && setIsDeleteModalOpen(false)}>
+          <div className="custom-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeletingAccount}><TbX size={24} /></button>
             
             <div className="modal-icon-warning">
               <TbAlertTriangle size={48} />
@@ -452,19 +513,19 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
             <div className="modal-body-text">
               <p>Questa operazione non può essere annullata. Richiedendo la chiusura dell'account perderai immediatamente l'accesso a:</p>
               <ul className="retention-list">
-                <li>Tutto il tuo <strong>archivio storico</strong> di configurazioni e preventivi.</li>
+                <li>Tutto il tuo <strong>archivio storico</strong> di configurazioni.</li>
                 <li>Le <strong>scontistiche dedicate</strong> a te riservate sui prodotti Fiore Ebanisteria.</li>
                 <li>Il supporto diretto e la priorità sulle nuove collezioni.</li>
               </ul>
-              <p className="modal-hint">Se hai solo bisogno di aggiornare l'email, ti consigliamo di contattare l'assistenza invece di eliminare l'account.</p>
             </div>
 
             <div className="modal-footer-actions">
-              <button className="btn-cancel-modal" onClick={() => setIsDeleteModalOpen(false)}>
+              <button className="btn-cancel-modal" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeletingAccount}>
                 Annulla e mantieni account
               </button>
-              <button className="btn-confirm-delete" onClick={confirmAccountDeletion}>
-                Sì, procedi con l'eliminazione
+              
+              <button className="btn-confirm-delete" onClick={confirmAccountDeletion} disabled={isDeletingAccount}>
+                {isDeletingAccount ? "Eliminazione in corso..." : "Sì, procedi con l'eliminazione"}
               </button>
             </div>
           </div>
@@ -473,8 +534,8 @@ export default function ProfileDashboard({ onLogout, onNewConfig }) {
 
       {/* --- MODALE ELIMINAZIONE SINGOLO DOCUMENTO --- */}
       {docToDelete && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-content document-delete-modal">
+        <div className="custom-modal-overlay" onClick={() => setDocToDelete(null)}>
+          <div className="custom-modal-content document-delete-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setDocToDelete(null)}><TbX size={24} /></button>
             
             <div className="modal-icon-warning danger-icon">

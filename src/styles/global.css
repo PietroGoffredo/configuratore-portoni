@@ -5,14 +5,20 @@
 :root {
   --font-primary: 'Raleway', sans-serif;
   --font-navbar: 'Open Sans', sans-serif;
+  
   --col-white-1: #ffffff;
   --col-white-2: #f8f8f8;
   --col-white-3: #e2e3e8;
   --col-white-4: #e0dede;
+  
   --col-gold: #bd9b4d;
+  
   --col-black-1: #404041;
   --col-black-2: #333333;
-  --col-black-3: #24272d;
+  --col-black-3: #24272d; /* Il tuo colore Navbar - usato come Sfondo/Bottoni principali */
+  
+  /* Variabile RGB del colore #24272d per ombre e trasparenze coerenti col brand */
+  --col-brand-dark-rgb: 36, 39, 45; 
 }
 
 /* --- RESET & GLOBAL --- */
