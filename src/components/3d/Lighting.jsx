@@ -1,29 +1,39 @@
 import React from 'react';
 import { Environment } from '@react-three/drei';
 
-export default function Lighting() {
+export default function Lighting({ viewMode }) {
+  const isExternal = viewMode === 'external';
+
   return (
     <>
-      {/* Ambiente HDR: fornisce riflessi per vetri/metalli e luce diffusa */}
+      {/* Ambiente HDR Dinamico: Switcha tra esterno e interno */}
       <Environment 
-        files="/textures/showroom/luce_studio.hdr" 
+        files={isExternal ? "/textures/showroom/luce_studio.hdr" : "/textures/showroom/luce_interna.hdr"} 
         background={false} 
-        environmentIntensity={0.8} // Leggermente alzato per far risaltare il telaio scuro
+        environmentIntensity={isExternal ? 0.7 : 0.9} 
       />
       
-      {/* Luce emisferica: riempie le ombre. Colori tenui per non "bruciare" il baking */}
+      {/* Luce emisferica */}
       <hemisphereLight 
-        skyColor="#ffffff" 
-        groundColor="#e6e4df" 
-        intensity={0.4} 
+        skyColor={isExternal ? "#b1d1ff" : "#ffffff"} 
+        groundColor={isExternal ? "#3d2b1f" : "#e6e4df"} 
+        intensity={isExternal ? 0.5 : 0.4} 
       />
       
-      {/* Sole: dà direzione e riflessi speculari (NIENTE OMBRE DINAMICHE) */}
+      {/* Luce Direzionale (Sole) */}
       <directionalLight 
-        position={[3, 8, 5]} 
-        intensity={1.2} 
-        color="#fff5e6" 
-        castShadow={false} // Fondamentale: ombre dinamiche disattivate
+        position={isExternal ? [2, 10, 4] : [4, 6, -3]} 
+        intensity={isExternal ? 2.0 : 1.2} 
+        color="#fff1d0" 
+        castShadow={false} 
+      />
+
+      {/* Luce di riempimento secondaria morbida */}
+      <directionalLight 
+        position={[-5, 2, -2]} 
+        intensity={0.4} 
+        color="#d0e0ff" 
+        castShadow={false} 
       />
     </>
   );

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TbChevronLeft, TbChevronRight } from "react-icons/tb"; 
 import Interface from '../components/ui/Interface';
-import CanvasControls from '../components/ui/CanvasControls';
+// Importiamo il componente e le costanti dei colori che abbiamo appena esportato
+import CanvasControls, { EXT_WALL_COLORS, INT_WALL_COLORS } from '../components/ui/CanvasControls';
 import OrderSummary from '../components/ui/OrderSummary';
 import Experience from '../components/3d/Experience';
 import { useTextureManager } from '../hooks/useTextureManager';
@@ -12,7 +13,11 @@ import { CAMERA_PRESETS } from '../config/cameraPresets';
 
 export default function ConfiguratorView() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
-  const [wallColor, setWallColor] = useState('#ffffff');
+  
+  // Impostiamo il default agganciandoci rigorosamente al primo elemento delle palette
+  const [extWallColor, setExtWallColor] = useState(EXT_WALL_COLORS[0].hex); 
+  const [intWallColor, setIntWallColor] = useState(INT_WALL_COLORS[0].hex); 
+  
   const [viewMode, setViewMode] = useState('external');
   const [interactionMode, setInteractionMode] = useState('static'); 
   const [isInteractionModeSwitching, setIsInteractionModeSwitching] = useState(false);
@@ -105,8 +110,9 @@ export default function ConfiguratorView() {
 
               <Experience 
                 webglContextRef={webglContextRef} setIsLoadingInitial={setIsLoadingInitial}
-                viewMode={viewMode} wallColor={wallColor} extFinish={extFinish}
-                intFinish={intFinish} scenario={scenario} activeAngle={activeAngle}
+                viewMode={viewMode} 
+                extWallColor={extWallColor} intWallColor={intWallColor}
+                extFinish={extFinish} intFinish={intFinish} scenario={scenario} activeAngle={activeAngle}
                 cameraTrigger={cameraTrigger} interactionMode={interactionMode}
                 isBlackout={isBlackout} zoomConfig={zoomConfig} isDraggingUI={isDraggingUI}
               />
@@ -123,7 +129,9 @@ export default function ConfiguratorView() {
               isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen} viewMode={viewMode} handleViewChange={handleViewChange}
               isTakingPhoto={isTakingPhoto} handleTakePhoto={() => handleTakePhoto(isInteractionModeSwitching)}
               isMobile={isMobile} interactionMode={interactionMode} toggleInteractionMode={toggleInteractionMode}
-              wallColor={wallColor} setWallColor={setWallColor} uiActiveAngleId={uiActiveAngleId}
+              extWallColor={extWallColor} setExtWallColor={setExtWallColor}
+              intWallColor={intWallColor} setIntWallColor={setIntWallColor}
+              uiActiveAngleId={uiActiveAngleId}
             />
           </div>
           

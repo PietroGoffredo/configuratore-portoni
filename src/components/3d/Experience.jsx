@@ -23,7 +23,8 @@ export default function Experience({
   webglContextRef, 
   setIsLoadingInitial, 
   viewMode, 
-  wallColor, 
+  extWallColor,  // Nuovo prop esterno
+  intWallColor,  // Nuovo prop interno
   extFinish, 
   intFinish, 
   scenario,
@@ -57,11 +58,19 @@ export default function Experience({
         }}
       >
         <WebGLContextHelper contextRef={webglContextRef} />
-        <Lighting />
+        
+        {/* Passiamo viewMode a Lighting per gestire HDRI e luci dinamicamente */}
+        <Lighting viewMode={viewMode} />
         
         <Suspense fallback={null}>
           <SceneReadyTrigger setLoaded={setIsLoadingInitial} />
-          <ShowroomScene viewMode={viewMode} wallColor={wallColor} />
+          
+          {/* Passaggio dei due colori distinti per i muri */}
+          <ShowroomScene 
+            viewMode={viewMode} 
+            extWallColor={extWallColor} 
+            intWallColor={intWallColor} 
+          />
           
           <group position={[0, 0, 0]}>
             <GruppoComune scenario={scenario} />

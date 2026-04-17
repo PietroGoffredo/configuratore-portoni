@@ -41,14 +41,14 @@
   top: 95%; 
   left: 50%; 
   transform: translateX(-50%); 
-  background-color: var(--col-black-3); /* Sfondo scuro */
-  color: var(--col-white-1); /* Testo chiaro */
+  background-color: var(--col-black-3); 
+  color: var(--col-white-1); 
   padding: 7px 10px; 
   font-size: 0.75rem; 
   font-weight: 500; 
   white-space: nowrap; 
   box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-  border: 1px solid var(--col-black-2); /* Bordo scuro */
+  border: 1px solid var(--col-black-2); 
   border-radius: 4px; 
   pointer-events: none; 
   z-index: 1000; 
@@ -67,13 +67,6 @@
 .bottom-left-controls > * { pointer-events: auto; }
 .bottom-right-controls { position: absolute; bottom: 15px; right: 15px; z-index: 25; pointer-events: auto; display: flex; gap: 10px; }
 
-/* Scenario Menu */
-.scenario-control-container { position: relative; display: flex; flex-direction: column; }
-.scenario-popup-menu { position: absolute; bottom: 100%; left: 0; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; background-color: var(--col-white-1); padding: 8px; border-radius: 8px; box-shadow: 0 3px 12px rgba(0,0,0,0.1); z-index: 100; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; }
-.scenario-popup-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
-.scenario-options-wrapper { display: flex; gap: 8px; }
-.scenario-option.active { border-color: var(--col-gold); color: var(--col-gold); background-color: var(--col-white-2); }
-
 /* Camera Presets Footer */
 .camera-presets-wrapper { flex: 0 0 auto; display: flex; justify-content: flex-start; gap: 15px; padding: 15px 4px 4px 4px; margin-left: -4px; width: calc(100% + 8px); overflow-x: auto; scrollbar-width: none; }
 .camera-presets-wrapper::-webkit-scrollbar { display: none; }
@@ -86,26 +79,26 @@
 .fs-ui-element.hidden-fs-ui { opacity: 0; visibility: hidden; pointer-events: none; }
 .fs-nav-left { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); z-index: 25; }
 .fs-nav-right { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 25; }
-.fs-counter { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background-color: var(--col-white-1); padding: 10px 24px; border-radius: 6px; font-weight: 500; letter-spacing: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 25; }
 .spinner-canvas, .spinner { border-radius: 50%; animation: spin 0.8s linear infinite; }
 .spinner-canvas { width: 40px; height: 40px; border: 4px solid var(--col-white-4); border-top-color: var(--col-gold); }
 .spinner { width: 24px; height: 24px; border: 3px solid rgba(0,0,0,0.1); border-top-color: var(--col-gold); }
 .spinner-sm { width: 18px; height: 18px; border-width: 2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* --- MENU POPUP COLORI MURO --- */
 .color-popup-menu { 
   position: absolute; 
-  bottom: calc(100% + 8px); 
+  bottom: calc(100% + 12px); 
   left: 0; 
   background-color: var(--col-white-1); 
-  padding: 11px; 
-  border-radius: 8px; 
-  box-shadow: 0 4px 18px rgba(0,0,0,0.1); 
+  padding: 16px; 
+  border-radius: 10px; 
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12); 
   z-index: 100; 
   opacity: 0; 
   visibility: hidden; 
   transform: translateY(10px); 
-  transition: all 0.3s ease; 
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
   pointer-events: none;
   cursor: default; 
 }
@@ -117,77 +110,83 @@
   pointer-events: auto; 
 }
 
-/* Titolo aggiornato: non corsivo, più spazio sotto */
+/* Titolo professionale stile Interface */
 .color-menu-title { 
   display: block; 
-  font-size: 0.85rem; 
+  font-size: 0.95rem; 
   font-weight: 500; 
-  color: var(--col-black-2); 
-  margin-bottom: 12px; 
-  letter-spacing: 0px; 
-  text-transform: none; 
+  font-family: var(--font-primary);
+  color: var(--col-black-3); 
+  margin-bottom: 10px; 
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--col-white-3);
 }
 
-/* Container opzioni: Gap aumentato */
+/* Griglia 3x2 nativa - IMPORTANTE: Z-index rimosso per i figli diretti per evitare clipping */
 .color-options-wrapper { 
-  display: flex; 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
   gap: 8px; 
   align-items: center;
-  height: auto;
+  justify-items: center;
+  position: relative;
+  z-index: 1; 
 }
 
-/* Riquadri opzioni più grandi */
+/* Opzioni grandi e rotonde come Interface */
 .color-option { 
-  width: 50px; 
-  height: 50px; 
-  border-radius: 6px; 
+  width: 54px; 
+  height: 54px; 
+  border-radius: 50%; 
   border: 1px solid var(--col-white-3); 
   cursor: pointer; 
   position: relative; 
   overflow: visible; 
-  transition: none; 
+  transition: all 0.1s ease;
+  background-clip: padding-box;
+  /* NON usare z-index qui altrimenti il cerchio copre le etichette degli altri */
 }
 
 .color-option:hover, 
 .color-option.active { 
   border-color: var(--col-white-1); 
   box-shadow: 0 0 0 1px var(--col-white-1), 0 0 0 3px var(--col-gold); 
-  z-index: 10; 
+  /* Z-index RIMOSSO di proposito. Le etichette hanno z-index: 9999 assoluto */
 }
 
-/* Etichetta spostata IN BASSO e ricolorata SCURA */
+/* Tooltip Scuro (stile Interface) - Z-INDEX CORRETTO E ALZATO */
 .color-option::after { 
   content: attr(data-label); 
   position: absolute; 
-  top: 95%; 
+  top: 90%; /* Partenza più alta per l'animazione slide-down */
   left: 50%; 
   transform: translateX(-50%); 
-  background-color: var(--col-black-3); /* Sfondo scuro */
-  color: var(--col-white-1); /* Testo chiaro */
+  background-color: var(--col-black-3); 
+  color: var(--col-white-1); 
   padding: 7px 10px; 
+  font-family: var(--font-primary);
   font-size: 0.75rem; 
   font-weight: 500; 
   white-space: nowrap; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-  border: 1px solid var(--col-black-2); /* Bordo scuro */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+  border: 1px solid var(--col-black-2); 
   border-radius: 4px; 
   pointer-events: none; 
-  z-index: 1000; 
+  z-index: 9999 !important; /* Questo garantisce che l'etichetta scavalchi SEMPRE gli altri cerchi */
   opacity: 0; 
   visibility: hidden; 
-  transition: all 0.2s ease; 
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); 
 }
 
 .color-option:hover::after { 
   opacity: 1; 
   visibility: visible; 
-  top: 110%; 
-  transition-delay: 0.6s; 
+  top: 110%; /* Scivola verso il basso, evitando di coprire se stesso */
+  transition-delay: 0.6s; /* Reso più rapido e scattante */
 }
 
 /* Mobile */
 @media screen and (max-width: 1024px) {
   .view-controls-vertical { flex-direction: row; bottom: 15px; top: auto; left: 50%; transform: translateX(-50%); }
   .bottom-left-controls { bottom: 15px; left: 15px; right: auto; }
-  .scenario-options-wrapper { flex-direction: column; }
 }

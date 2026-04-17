@@ -6,11 +6,26 @@ import {
 } from "react-icons/tb";
 import { VscSymbolColor } from "react-icons/vsc";
 
-const WALL_COLORS = [
-  { id: 'white', hex: '#ffffff', label: 'Bianco Base' },
-  { id: 'gray', hex: '#a9b0b5', label: 'Grigio Cemento' },
-  { id: 'brown', hex: '#8b7d6b', label: 'Tortora/Marrone' },
-  { id: 'dark', hex: '#363636', label: 'Antracite' }
+// ESPORTIAMO I COLORI: Il primo elemento di ogni array sarà il default automatico.
+
+// Colori Muro Esterno
+export const EXT_WALL_COLORS = [
+  { id: 'bianco_intonaco', hex: '#F2F0EB', label: 'Bianco' }, 
+  { id: 'beige_sabbia', hex: '#D4C9B9', label: 'Beige sabbia' },
+  { id: 'tortora_est', hex: '#A39A8F', label: 'Tortora' },
+  { id: 'grigio_pietra', hex: '#8C8E8B', label: 'Grigio pietra' },
+  { id: 'antracite', hex: '#4A4F54', label: 'Grigio antracite' },
+  { id: 'mattone', hex: '#9C5B48', label: 'Rosso mattone' }
+];
+
+// Colori Parete Interna
+export const INT_WALL_COLORS = [
+  { id: 'bianco_opaco', hex: '#F8F8F8', label: 'Bianco opaco' }, 
+  { id: 'tortora_int', hex: '#D5CEC4', label: 'Tortora chiaro' },
+  { id: 'grigio_nuvola', hex: '#D1D5D8', label: 'Grigio nuvola' },
+  { id: 'salvia', hex: '#8A9A86', label: 'Verde salvia' },
+  { id: 'blu_polvere', hex: '#7A8B99', label: 'Blu polvere' },
+  { id: 'terracotta', hex: '#C6876D', label: 'Terracotta' }
 ];
 
 export default function CanvasControls({
@@ -18,7 +33,8 @@ export default function CanvasControls({
   viewMode, handleViewChange,
   isTakingPhoto, handleTakePhoto,
   isMobile, interactionMode, toggleInteractionMode,
-  wallColor, setWallColor,
+  extWallColor, setExtWallColor, 
+  intWallColor, setIntWallColor, 
   uiActiveAngleId 
 }) {
   const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
@@ -38,6 +54,16 @@ export default function CanvasControls({
     setIsColorMenuOpen(false);
   }, [uiActiveAngleId, isFullscreen, viewMode, interactionMode]);
 
+  // Logica Dinamica basata sulla vista corrente
+  const isExternal = viewMode === 'external';
+  const activeColorsList = isExternal ? EXT_WALL_COLORS : INT_WALL_COLORS;
+  const activeColor = isExternal ? extWallColor : intWallColor;
+  const activeSetColor = isExternal ? setExtWallColor : setIntWallColor;
+  
+  // Titoli più professionali e accattivanti
+  const menuTitle = isExternal ? "Colore facciata esterna" : "Colore parete interna";
+  const buttonLabel = isExternal ? "Modifica facciata" : "Modifica parete";
+
   return (
     <div className="canvas-ui-overlay">
       
@@ -55,7 +81,7 @@ export default function CanvasControls({
           className={`ui-btn btn-view ${viewMode === 'external' ? 'active' : ''}`} 
           onClick={(e) => { e.stopPropagation(); handleViewChange('external'); }}
           onMouseLeave={(e) => e.currentTarget.blur()}
-          data-label="Vista Esterna"
+          data-label="Vista esterna"
         >
           <TbDoorEnter size={26} />
         </button>
@@ -64,7 +90,7 @@ export default function CanvasControls({
           className={`ui-btn btn-view ${viewMode === 'internal' ? 'active' : ''}`} 
           onClick={(e) => { e.stopPropagation(); handleViewChange('internal'); }}
           onMouseLeave={(e) => e.currentTarget.blur()}
-          data-label="Vista Interna"
+          data-label="Vista interna"
         >
           <TbDoorExit size={26} />
         </button>
@@ -73,18 +99,19 @@ export default function CanvasControls({
       <div className="bottom-left-controls" ref={colorMenuRef}>
         
         <div className={`color-popup-menu ${isColorMenuOpen ? 'open' : ''}`}>
-          <span className="color-menu-title">Cambia il colore del muro:</span>
+          <span className="color-menu-title">{menuTitle}</span>
+          
           <div className="color-options-wrapper">
-            {WALL_COLORS.map((c) => (
+            {activeColorsList.map((c) => (
               <div
                 key={c.id}
-                className={`color-option ${wallColor === c.hex ? 'active' : ''}`}
+                className={`color-option ${activeColor === c.hex ? 'active' : ''}`}
                 style={{ backgroundColor: c.hex }}
                 data-label={c.label}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (wallColor !== c.hex) {
-                    setWallColor(c.hex);
+                  if (activeColor !== c.hex) {
+                    activeSetColor(c.hex);
                   }
                 }}
               />
@@ -99,7 +126,7 @@ export default function CanvasControls({
             setIsColorMenuOpen(!isColorMenuOpen); 
           }}
           onMouseLeave={(e) => e.currentTarget.blur()}
-          data-label="Colore Muro"
+          data-label={buttonLabel}
         >
           <VscSymbolColor size={26} />
         </button>
@@ -108,7 +135,7 @@ export default function CanvasControls({
           className="ui-btn"
           onClick={(e) => { e.stopPropagation(); handleTakePhoto(); }}
           onMouseLeave={(e) => e.currentTarget.blur()}
-          data-label="Scatta Foto"
+          data-label="Cattura screenshot"
           disabled={isTakingPhoto}
         >
           {isTakingPhoto ? <div className="spinner spinner-sm"></div> : <TbCamera size={26} />}
@@ -122,7 +149,7 @@ export default function CanvasControls({
             className={`ui-btn ${interactionMode === '3d' ? 'active' : ''}`}
             onClick={(e) => { e.stopPropagation(); toggleInteractionMode(); }}
             onMouseLeave={(e) => e.currentTarget.blur()}
-            data-label={interactionMode === 'static' ? "Attiva 3D (360°)" : "Modalità Foto"}
+            data-label={interactionMode === 'static' ? "Visualizza a 360°" : "Disattiva 360°"}
           >
             <TbView360Number size={26} />
           </button>
