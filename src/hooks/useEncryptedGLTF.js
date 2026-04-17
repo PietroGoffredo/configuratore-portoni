@@ -28,7 +28,13 @@ export function useEncryptedGLTF(url) {
     async function decryptFile() {
       try {
         const host = window.location.hostname;
-        const trusted = ['localhost', '127.0.0.1', 'fiorebanisteria.com', 'www.fiorebanisteria.com'];
+        const trusted = [
+          'localhost', 
+          '127.0.0.1', 
+          'fiorebanisteria.com', 
+          'www.fiorebanisteria.com',
+          'fiorebianisteria-configuratore.vercel.app' // <-- AGGIUNGI QUESTO
+        ];
         if (!trusted.some(d => host.includes(d))) throw new Error("Security Violation");
 
         const response = await fetch(url);
