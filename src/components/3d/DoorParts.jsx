@@ -1,8 +1,10 @@
 /* eslint-disable react/no-unknown-property */
 import React, { useMemo } from 'react';
-import { useGLTF, useTexture } from '@react-three/drei';
+import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-import { getFirstGeometry } from './Generic'; // <-- Importiamo da Generic.jsx
+import { getFirstGeometry } from './Generic';
+// Importiamo l'hook e la funzione di preload una volta sola
+import { useEncryptedGLTF, preloadEncryptedGLTF } from '../../hooks/useEncryptedGLTF';
 
 const ensureUV2 = (geometry) => {
   if (geometry && geometry.attributes.uv && !geometry.attributes.uv2) {
@@ -61,51 +63,12 @@ const MaterialeTexturizzato = ({ config }) => {
   return <meshStandardMaterial map={textures.map} aoMapIntensity={0.8} envMapIntensity={0.8} {...commonProps} />;
 };
 
-// --- PARTI FISSE DEL PORTONE ---
-const PlainPart = ({ path, color, scenario }) => {
-  const { nodes } = useGLTF(path);
-  const geometry = getFirstGeometry(nodes);
-  
-  useMemo(() => ensureUV2(geometry), [geometry]);
-
-  if (!geometry) return null;
-  return (
-    <mesh geometry={geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
-      <meshStandardMaterial color={color} roughness={0.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
-    </mesh>
-  );
-};
-
-const MetalPart = ({ path, scenario }) => {
-  const { nodes } = useGLTF(path);
-  const geometry = getFirstGeometry(nodes);
-  const propsMetallo = useTexture({
-    map: '/textures/altro/metallo_spazzolato/color.jpg',
-    normalMap: '/textures/altro/metallo_spazzolato/normal.png',
-    roughnessMap: '/textures/altro/metallo_spazzolato/roughness.jpg',
-    aoMap: '/textures/altro/metallo_spazzolato/ao.jpg',
-  });
-  
-  useMemo(() => {
-    Object.values(propsMetallo).forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
-    propsMetallo.map.colorSpace = THREE.SRGBColorSpace;
-    propsMetallo.normalMap.colorSpace = THREE.NoColorSpace;
-    propsMetallo.roughnessMap.colorSpace = THREE.NoColorSpace;
-    propsMetallo.aoMap.colorSpace = THREE.NoColorSpace;
-  }, [propsMetallo]);
-
-  useMemo(() => ensureUV2(geometry), [geometry]);
-
-  if (!geometry) return null;
-  return (
-    <mesh geometry={geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
-       <meshStandardMaterial {...propsMetallo} color="#ffffff" metalness={1.0} roughness={0.3} envMapIntensity={1.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
-    </mesh>
-  );
-};
-
+// --- COMPONENTE BASE PER PARTI SINGOLE ---
 const ConfigurablePart = ({ path, config, scenario }) => {
-  const { nodes } = useGLTF(path);
+  const fileName = path.split('/').pop().replace('.glb', '.enc');
+  const securePath = `/models/nordic_secure/${fileName}`;
+  
+  const { nodes } = useEncryptedGLTF(securePath);
   const geometry = getFirstGeometry(nodes);
   
   useMemo(() => ensureUV2(geometry), [geometry]);
@@ -118,17 +81,66 @@ const ConfigurablePart = ({ path, config, scenario }) => {
   );
 };
 
-// --- GRUPPI ---
+// --- GRUPPI PRINCIPALI DELLA PORTA ---
+
 export function GruppoEsterno({ config, viewMode, scenario }) {
-  const basePath = '/models/nordic/nordic_01/';
-  const isHPL = config.category === 'hpl';
   const show = viewMode === 'external';
+  const isHPL = config.category === 'hpl';
+
+  // CARICAMENTO DEL FILE UNICO CRIPTATO
+  const { nodes } = useEncryptedGLTF('/models/nordic_secure/nordic_01_esterno.enc');
+
+  const propsMetallo = useTexture({
+    map: '/textures/altro/metallo_spazzolato/color.jpg',
+    normalMap: '/textures/altro/metallo_spazzolato/normal.png',
+    roughnessMap: '/textures/altro/metallo_spazzolato/roughness.jpg',
+    aoMap: '/textures/altro/metallo_spazzolato/ao.jpg',
+  });
+
+  useMemo(() => {
+    Object.values(propsMetallo).forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
+    if(propsMetallo.map) propsMetallo.map.colorSpace = THREE.SRGBColorSpace;
+    if(propsMetallo.normalMap) propsMetallo.normalMap.colorSpace = THREE.NoColorSpace;
+    if(propsMetallo.roughnessMap) propsMetallo.roughnessMap.colorSpace = THREE.NoColorSpace;
+    if(propsMetallo.aoMap) propsMetallo.aoMap.colorSpace = THREE.NoColorSpace;
+  }, [propsMetallo]);
+
+  useMemo(() => {
+    if (nodes) {
+      if (nodes.Anello) ensureUV2(nodes.Anello.geometry);
+      if (nodes.Core) ensureUV2(nodes.Core.geometry);
+      if (nodes.Overlay) ensureUV2(nodes.Overlay.geometry);
+    }
+  }, [nodes]);
+
+  if (!nodes || !nodes.Anello || !nodes.Core || !nodes.Overlay) return null;
 
   return (
     <group visible={show}>
-      <MetalPart path={`${basePath}anello_pannello_esterno.glb`} scenario={scenario} />
-      <PlainPart path={`${basePath}core_pannello_esterno.glb`} color={isHPL ? '#24272d' : config.hex} scenario={scenario} />
-      <ConfigurablePart path={`${basePath}overlay_pannello_esterno.glb`} config={config} scenario={scenario} />
+      <mesh geometry={nodes.Anello.geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
+        <meshStandardMaterial 
+          {...propsMetallo} 
+          color="#ffffff" 
+          metalness={1.0} 
+          roughness={0.3} 
+          envMapIntensity={1.5} 
+          side={THREE.DoubleSide} 
+          shadowSide={THREE.BackSide} 
+        />
+      </mesh>
+
+      <mesh geometry={nodes.Core.geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
+        <meshStandardMaterial 
+          color={isHPL ? '#24272d' : config.hex} 
+          roughness={0.5} 
+          side={THREE.DoubleSide} 
+          shadowSide={THREE.BackSide} 
+        />
+      </mesh>
+
+      <mesh geometry={nodes.Overlay.geometry} castShadow={scenario === 'showroom'} receiveShadow={scenario === 'showroom'} frustumCulled={false}>
+        {config.isSolid ? <MaterialeSolido config={config} /> : <MaterialeTexturizzato config={config} />}
+      </mesh>
     </group>
   );
 }
@@ -137,6 +149,7 @@ export function GruppoInterno({ config, viewMode, scenario }) {
   const path = '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb';
   const show = viewMode === 'internal';
 
+  // Nessun "return null"! Rendiamo solo invisibile il gruppo.
   return (
     <group visible={show}>
       <ConfigurablePart path={path} config={config} scenario={scenario} />
@@ -145,27 +158,19 @@ export function GruppoInterno({ config, viewMode, scenario }) {
 }
 
 export function GruppoComune({ scenario }) {
-  const pathStruttura = '/models/nordic/struttura/struttura.glb';
-  const pathTelaio = '/models/nordic/telaio/telaio.glb';
-  const okumeConfig = { folder: 'altro/legno_okume', isTextured: true, id: 'legno_okume_fixed' };
-
-  return (
-    <group visible={true}>
-      <ConfigurablePart path={pathStruttura} config={okumeConfig} scenario={scenario} />
-      <ConfigurablePart path={pathTelaio} config={okumeConfig} scenario={scenario} />
-    </group>
-  );
+  // Disabilitato per ora
+  return null;
 }
 
-const files = [
-  '/models/nordic/nordic_01/anello_pannello_esterno.glb',
-  '/models/nordic/nordic_01/core_pannello_esterno.glb',
-  '/models/nordic/nordic_01/overlay_pannello_esterno.glb',
-  '/models/nordic/pannello_interno_liscio/pannello_interno_liscio.glb',
-  '/models/nordic/struttura/struttura.glb',
-  '/models/nordic/telaio/telaio.glb',
+// --- PRELOAD E PRE-DECRIPTAZIONE GLOBALE ---
+
+// 1. Preload delle texture
+const texturesToPreload = [
   '/textures/altro/metallo_spazzolato/color.jpg',
   '/textures/altro/legno_okume/color.jpg'
 ];
+texturesToPreload.forEach(f => useTexture.preload(f));
 
-files.forEach(f => useGLTF.preload(f));
+// 2. Preload dei modelli criptati (Fondamentale per eliminare la schermata bianca)
+preloadEncryptedGLTF('/models/nordic_secure/nordic_01_esterno.enc');
+preloadEncryptedGLTF('/models/nordic_secure/pannello_interno_liscio.enc');
